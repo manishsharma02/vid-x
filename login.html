@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — VidX</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-blue:#3b82f6;--neon-purple:#8b5cf6;--neon-cyan:#06b6d4;--neon-pink:#ec4899;--neon-green:#10b981;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);--primary:#8b5cf6;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+    .mono{font-family:'JetBrains Mono',monospace}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--neon-purple);border-radius:2px}
+    .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.15;pointer-events:none;z-index:0;animation:orbFloat 8s ease-in-out infinite}
+    .orb-1{width:400px;height:400px;background:#8b5cf6;top:-100px;left:-100px}
+    .orb-2{width:300px;height:300px;background:#3b82f6;bottom:-100px;right:-100px;animation-delay:3s}
+    .orb-3{width:200px;height:200px;background:#06b6d4;top:50%;left:50%;animation-delay:6s}
+    @keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-30px) scale(1.1)}}
+    .page{position:relative;z-index:1;min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
+    .left-panel{display:flex;align-items:center;justify-content:center;padding:2rem}
+    .form-card{width:100%;max-width:440px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:16px;padding:2.5rem;backdrop-filter:blur(20px)}
+    .logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;color:var(--text);font-weight:800;font-size:1.4rem;margin-bottom:2rem}
+    .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.85rem;box-shadow:0 0 20px var(--glow-purple)}
+    .tabs{display:flex;gap:.5rem;margin-bottom:2rem;background:var(--bg3);border-radius:10px;padding:4px}
+    .tab{flex:1;padding:.65rem;border:none;background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;border-radius:8px;cursor:pointer;transition:all .2s}
+    .tab.active{background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;box-shadow:0 0 15px var(--glow-purple)}
+    .form-group{margin-bottom:1.25rem}
+    .form-group label{display:block;font-size:.85rem;font-weight:600;color:var(--muted);margin-bottom:.5rem}
+    .form-group input{width:100%;padding:.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif;font-size:.95rem;transition:border-color .2s,box-shadow .2s}
+    .form-group input:focus{outline:none;border-color:var(--neon-purple);box-shadow:0 0 0 3px rgba(139,92,246,.2)}
+    .form-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;font-size:.85rem}
+    .form-row label{display:flex;align-items:center;gap:.4rem;color:var(--muted);cursor:pointer}
+    .form-row a{color:var(--neon-purple);text-decoration:none;font-weight:600}
+    .btn{width:100%;padding:.85rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;box-shadow:0 4px 20px var(--glow-purple);transition:transform .2s}
+    .btn:hover{transform:translateY(-2px)}.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .signup-link{text-align:center;margin-top:1.5rem;font-size:.9rem;color:var(--muted)}
+    .signup-link a{color:var(--neon-purple);font-weight:700;text-decoration:none}
+    .alert{padding:.75rem 1rem;border-radius:10px;font-size:.85rem;font-weight:600;margin-bottom:1rem;display:none}
+    .alert.error{display:block;background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.3);color:var(--neon-pink)}
+    .alert.success{display:block;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--neon-green)}
+    .right-panel{background:var(--bg2);border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:2rem}
+    .preview-card{width:100%;max-width:420px}
+    .preview-label{display:inline-flex;align-items:center;gap:.5rem;font-size:.85rem;font-weight:700;color:var(--neon-pink);margin-bottom:1.5rem}
+    .live-dot{width:8px;height:8px;background:var(--neon-pink);border-radius:50%;animation:livePulse 1.5s infinite}
+    @keyframes livePulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .preview-title{font-size:1.5rem;font-weight:800;margin-bottom:.5rem}
+    .countdown-box{background:var(--bg3);border:1px solid var(--border-glow);border-radius:16px;padding:1.25rem;margin-bottom:1.5rem;text-align:center;box-shadow:0 0 20px var(--glow-purple)}
+    .countdown-label{font-size:.8rem;color:var(--muted);margin-bottom:.5rem}
+    .countdown-time{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;color:var(--neon-cyan)}
+    .rank-list{display:flex;flex-direction:column;gap:.6rem}
+    .rank-item{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:12px;transition:border-color .2s}
+    .rank-item:hover{border-color:var(--border-glow)}
+    .rank-pos{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--muted);width:28px}
+    .rank-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700}
+    .rank-nm{flex:1;font-weight:700;font-size:.9rem}
+    .rank-xp{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--neon-cyan)}
+    .loading{color:var(--muted);text-align:center;padding:1rem}
+    @media(max-width:900px){.page{grid-template-columns:1fr}.right-panel{display:none}}
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+  <div class="page">
+    <div class="left-panel">
+      <div class="form-card" data-aos="fade-up">
+        <a href="index.html" class="logo"><div class="logo-icon">VX</div>VidX</a>
+        <div class="tabs">
+          <button class="tab active" id="tabStudent" onclick="switchTab('student')">🎓 Student Login</button>
+          <button class="tab" id="tabAdmin" onclick="switchTab('admin')">🔴 Admin Login</button>
+        </div>
+        <div class="alert" id="alertBox"></div>
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="you@college.edu" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="••••••••" required>
+          </div>
+          <div class="form-row">
+            <label><input type="checkbox" id="remember"> Remember me</label>
+            <a href="#">Forgot password?</a>
+          </div>
+          <button type="submit" class="btn" id="submitBtn">Sign In →</button>
+        </form>
+        <p class="signup-link">Don't have an account? <a href="register.html">Sign up</a></p>
+      </div>
+    </div>
+    <div class="right-panel" data-aos="fade-left">
+      <div class="preview-card">
+        <div class="preview-label"><span class="live-dot"></span> Live Rankings</div>
+        <h2 class="preview-title">Top Coders Today</h2>
+        <div class="countdown-box">
+          <div class="countdown-label">Daily problem expires in</div>
+          <div class="countdown-time mono" id="countdown">--:--:--</div>
+        </div>
+        <div class="rank-list" id="rankList"><p class="loading">Loading...</p></div>
+      </div>
+    </div>
+  </div>
+  <script src="supabase.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({duration:700,once:true,offset:80});
+    let loginMode = 'student';
+    const ADMIN_EMAIL = 'manish@yash';
+    const ADMIN_PASS = 'Sharma8888@';
+
+    function switchTab(mode) {
+      loginMode = mode;
+      document.getElementById('tabStudent').classList.toggle('active', mode === 'student');
+      document.getElementById('tabAdmin').classList.toggle('active', mode === 'admin');
+      document.getElementById('email').placeholder = mode === 'admin' ? 'Admin email' : 'you@college.edu';
+    }
+
+    function showAlert(msg, type) {
+      const el = document.getElementById('alertBox');
+      el.textContent = msg;
+      el.className = 'alert ' + type;
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      btn.disabled = true; btn.textContent = 'Signing in...';
+
+      if (loginMode === 'admin') {
+        if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
+          sessionStorage.setItem('vidx_admin', 'true');
+          showAlert('Admin login successful! Redirecting...', 'success');
+          setTimeout(() => window.location.href = 'admin-dashboard.html', 800);
+        } else {
+          showAlert('Invalid admin credentials.', 'error');
+          btn.disabled = false; btn.textContent = 'Sign In →';
+        }
+        return;
+      }
+
+      const result = await loginStudent(email, password);
+      if (result.success) {
+        showAlert('Welcome back! Redirecting...', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 800);
+      } else {
+        showAlert(result.error || 'Login failed.', 'error');
+        btn.disabled = false; btn.textContent = 'Sign In →';
+      }
+    });
+
+    function updateCountdown() {
+      const c = getMidnightCountdown();
+      document.getElementById('countdown').textContent = c.formatted;
+    }
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    async function onDbReady() {
+      const list = document.getElementById('rankList');
+      const students = await getLeaderboard(4);
+      if (!students.length) { list.innerHTML = '<p class="loading">No rankings yet</p>'; return; }
+      list.innerHTML = students.map((s, i) => {
+        const name = `${s.first_name||''} ${s.last_name||''}`.trim() || s.email;
+        return `<div class="rank-item"><span class="rank-pos mono">#${i+1}</span><div class="rank-av">${getInitials(s.first_name,s.last_name)}</div><span class="rank-nm">${name}</span><span class="rank-xp">${(s.xp||0).toLocaleString()} XP</span></div>`;
+      }).join('');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Problem Library — VidX</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-blue:#3b82f6;--neon-purple:#8b5cf6;--neon-cyan:#06b6d4;--neon-pink:#ec4899;--neon-green:#10b981;--neon-yellow:#f59e0b;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);--sidebar-w:260px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    .mono{font-family:'JetBrains Mono',monospace}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--neon-purple);border-radius:2px}
+    .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.12;pointer-events:none;z-index:0}.orb-1{width:350px;height:350px;background:#8b5cf6;top:-80px;right:10%}
+    .layout{display:flex;min-height:100vh;position:relative;z-index:1}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto}
+    .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
+    .nav-section{padding:1rem 0}.nav-label{padding:0 1.5rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;border-left:3px solid transparent;transition:all .2s}
+    .nav-item:hover{color:var(--text);background:rgba(139,92,246,.05)}.nav-item.active{color:var(--text);border-left-color:var(--neon-purple);background:rgba(139,92,246,.08)}
+    .sidebar-user{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
+    .user-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+    .main{margin-left:var(--sidebar-w);flex:1;padding:2rem}
+    .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border)}
+    .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
+    .page-title{font-size:1.8rem;font-weight:800;margin-bottom:1rem}
+    .search-bar{width:100%;padding:.85rem 1.2rem;background:var(--bg3);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Syne',sans-serif;font-size:1rem;margin-bottom:1.25rem}
+    .search-bar:focus{outline:none;border-color:var(--neon-purple);box-shadow:0 0 0 3px rgba(139,92,246,.2)}
+    .section-tabs{display:flex;gap:.5rem;margin-bottom:1.25rem;flex-wrap:wrap}
+    .stab{padding:.55rem 1.1rem;background:var(--bg2);border:1px solid var(--border);border-radius:100px;color:var(--muted);font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s}
+    .stab.active{background:rgba(139,92,246,.15);border-color:var(--neon-purple);color:var(--text)}
+    .filters-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
+    .filter-group label{display:block;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:.4rem;letter-spacing:.05em}
+    .filter-group select{width:100%;padding:.6rem .8rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif;font-size:.9rem}
+    .filter-group select option{background:var(--bg3)}
+    .daily-banner{background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(59,130,246,.15));border:1px solid var(--border-glow);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+    .daily-banner h3{font-weight:800;font-size:1.1rem}
+    .btn{padding:.65rem 1.4rem;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;text-decoration:none;cursor:pointer;border:none;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;box-shadow:0 4px 15px var(--glow-purple)}
+    .problems-list{display:flex;flex-direction:column;gap:.75rem}
+    .prob-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem;transition:all .3s;cursor:pointer;text-decoration:none;color:inherit}
+    .prob-card:hover{border-color:var(--border-glow);transform:translateY(-2px);box-shadow:0 0 20px var(--glow-purple)}
+    .prob-card.solved{border-left:3px solid var(--neon-green)}
+    .prob-info{flex:1;min-width:0}
+    .prob-title{font-weight:800;font-size:1rem;margin-bottom:.4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .prob-meta{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+    .tag{display:inline-block;padding:.2rem .55rem;border-radius:100px;font-size:.7rem;font-weight:700}
+    .tag-easy{background:rgba(16,185,129,.15);color:var(--neon-green)}.tag-med{background:rgba(245,158,11,.15);color:var(--neon-yellow)}.tag-hard{background:rgba(236,72,153,.15);color:var(--neon-pink)}
+    .tag-topic{background:rgba(139,92,246,.15);color:var(--neon-purple)}.tag-co{background:rgba(6,182,212,.1);color:var(--neon-cyan);font-size:.65rem}
+    .prob-stats{text-align:right;flex-shrink:0}
+    .prob-xp{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--neon-cyan);font-size:.9rem}
+    .prob-solves{font-size:.75rem;color:var(--muted);margin-top:.2rem}
+    .bookmark-icon{font-size:1.1rem}
+    .empty-state{text-align:center;padding:3rem;color:var(--muted)}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999}.overlay.show{display:block}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:1rem}.mobile-topbar{display:flex}.prob-stats{display:none}}
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
+      <div class="nav-section"><div class="nav-label">Main</div>
+        <a href="dashboard.html" class="nav-item">🏠 Dashboard</a>
+        <a href="problems.html" class="nav-item active">📚 Problem Library</a>
+        <a href="problem.html" class="nav-item">⚡ Daily Problem</a>
+        <a href="leaderboard.html" class="nav-item">🏆 Leaderboard</a>
+        <a href="sadhana.html" class="nav-item">🧘 Sadhana Mode</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Community</div>
+        <a href="battles.html" class="nav-item">👥 Battles</a>
+        <a href="knowledge-hub.html" class="nav-item">🎓 Knowledge Hub</a>
+        <a href="discussions.html" class="nav-item">💬 Discussions</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Account</div>
+        <a href="profile.html" class="nav-item">👤 My Profile</a>
+        <a href="certificate.html" class="nav-item">📜 Certificates</a>
+        <a href="#" class="nav-item" onclick="logout();return false">🚪 Log Out</a>
+      </div>
+      <div class="sidebar-user"><div class="user-av" id="sidebarAv">?</div><div><div style="font-weight:700" id="sidebarName">—</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="mobile-topbar"><button class="hamburger" onclick="toggleSidebar()">☰</button><strong>Problem Library</strong></div>
+      <h1 class="page-title" data-aos="fade-up">📚 Problem Library</h1>
+      <input type="text" class="search-bar" id="searchInput" placeholder="Search by title or topic..." oninput="renderProblems()">
+      <div class="section-tabs" data-aos="fade-up">
+        <button class="stab active" data-section="all" onclick="setSection('all',this)">All Problems</button>
+        <button class="stab" data-section="daily" onclick="setSection('daily',this)">Daily Problem</button>
+        <button class="stab" data-section="solved" onclick="setSection('solved',this)">Solved</button>
+        <button class="stab" data-section="unsolved" onclick="setSection('unsolved',this)">Unsolved</button>
+        <button class="stab" data-section="bookmarked" onclick="setSection('bookmarked',this)">Bookmarked</button>
+      </div>
+      <div class="filters-grid" data-aos="fade-up">
+        <div class="filter-group"><label>Difficulty</label><select id="fDiff" onchange="renderProblems()"><option value="all">All</option><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
+        <div class="filter-group"><label>Topic</label><select id="fTopic" onchange="renderProblems()"><option value="all">All</option><option>Arrays</option><option>Strings</option><option>Linked List</option><option>Stack</option><option>Queue</option><option>Trees</option><option>Graphs</option><option>DP</option><option>Recursion</option><option>Searching</option><option>Sorting</option><option>Greedy</option><option>Backtracking</option></select></div>
+        <div class="filter-group"><label>Company</label><select id="fCompany" onchange="renderProblems()"><option value="all">All</option><option>Google</option><option>Amazon</option><option>Microsoft</option><option>Adobe</option><option>Goldman Sachs</option><option>Atlassian</option><option>Flipkart</option><option>Walmart</option><option>Meta</option></select></div>
+        <div class="filter-group"><label>Sort By</label><select id="fSort" onchange="renderProblems()"><option value="newest">Newest</option><option value="solved">Most Solved</option><option value="xp">Highest XP</option><option value="difficulty">Difficulty</option></select></div>
+      </div>
+      <div id="dailyBanner"></div>
+      <div class="problems-list" id="problemsList" data-aos="fade-up"><p class="empty-state">Loading problems...</p></div>
+    </div>
+  </div>
+  <script src="supabase.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({duration:700,once:true,offset:80});
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+
+    let currentUser=null,allProblems=[],solvedIds=[],bookmarkedIds=[],dailyProblem=null,currentSection='all';
+
+    async function onDbReady(){
+      currentUser=await requireAuth();if(!currentUser)return;
+      const profile=await getUserProfile(currentUser.id);
+      document.getElementById('sidebarAv').textContent=getInitials(profile?.first_name,profile?.last_name);
+      document.getElementById('sidebarName').textContent=`${profile?.first_name||''} ${profile?.last_name||''}`.trim();
+      [allProblems,solvedIds,bookmarkedIds,dailyProblem]=await Promise.all([
+        getAllProblems(),getUserSolvedProblemIds(currentUser.id),getBookmarkedProblems(currentUser.id),getDailyProblem()
+      ]);
+      renderDailyBanner();
+      renderProblems();
+    }
+
+    function setSection(s,btn){currentSection=s;document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderProblems();}
+
+    function renderDailyBanner(){
+      const el=document.getElementById('dailyBanner');
+      if(!dailyProblem){el.innerHTML='';return;}
+      el.innerHTML=`<div class="daily-banner"><div><h3>⚡ Today's Daily Challenge</h3><p style="color:var(--muted);font-size:.9rem">${dailyProblem.title}</p></div><a href="problem.html?id=${dailyProblem.id}" class="btn">Solve Now →</a></div>`;
+    }
+
+    function diffClass(d){return d==='Advanced'?'tag-hard':d==='Intermediate'?'tag-med':'tag-easy';}
+
+    function renderProblems(){
+      const list=document.getElementById('problemsList');
+      let pool=[...allProblems];
+
+      if(currentSection==='daily'&&dailyProblem) pool=[dailyProblem];
+      else if(currentSection==='solved') pool=pool.filter(p=>solvedIds.includes(p.id));
+      else if(currentSection==='unsolved') pool=pool.filter(p=>!solvedIds.includes(p.id));
+      else if(currentSection==='bookmarked') pool=pool.filter(p=>bookmarkedIds.includes(p.id));
+
+      const filtered=filterProblems(pool,{
+        search:document.getElementById('searchInput').value,
+        difficulty:document.getElementById('fDiff').value,
+        topic:document.getElementById('fTopic').value,
+        company:document.getElementById('fCompany').value,
+        solvedIds,bookmarkedIds,
+        sort:document.getElementById('fSort').value
+      });
+
+      if(!filtered.length){list.innerHTML='<p class="empty-state">No problems match your filters.</p>';return;}
+
+      list.innerHTML=filtered.map(p=>{
+        const solved=solvedIds.includes(p.id);
+        const bookmarked=bookmarkedIds.includes(p.id);
+        const companies=(p.companies||[]).slice(0,3).map(c=>`<span class="tag tag-co">${c}</span>`).join('');
+        return `<a href="problem.html?id=${p.id}" class="prob-card ${solved?'solved':''}">
+          <div class="prob-info">
+            <div class="prob-title">${p.title}</div>
+            <div class="prob-meta">
+              <span class="tag ${diffClass(p.difficulty)}">${p.difficulty||'Beginner'}</span>
+              <span class="tag tag-topic">${p.topic||'General'}</span>${companies}
+            </div>
+          </div>
+          <div class="prob-stats">
+            <div class="prob-xp">⭐ ${p.xp_reward||50} XP</div>
+            <div class="prob-solves">${p.correct_submission_count||p.solve_count||0} solves</div>
+          </div>
+          ${bookmarked?'<span class="bookmark-icon">🔖</span>':''}
+        </a>`;
+      }).join('');
+    }
+  </script>
+</body>
+</html>

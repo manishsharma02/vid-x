@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — VidX</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-purple:#8b5cf6;--neon-blue:#3b82f6;--neon-cyan:#06b6d4;--neon-green:#10b981;--neon-yellow:#f59e0b;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);--sidebar-w:260px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    .mono{font-family:'JetBrains Mono',monospace}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--neon-purple);border-radius:2px}
+    .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.12;pointer-events:none;z-index:0}.orb-1{width:300px;height:300px;background:#8b5cf6;bottom:-50px;right:20%}
+    .layout{display:flex;min-height:100vh;position:relative;z-index:1}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto}
+    .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
+    .nav-section{padding:1rem 0}.nav-label{padding:0 1.5rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;border-left:3px solid transparent;transition:all .2s}
+    .nav-item:hover{color:var(--text);background:rgba(139,92,246,.05)}.nav-item.active{color:var(--text);border-left-color:var(--neon-purple);background:rgba(139,92,246,.08)}
+    .sidebar-user{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
+    .user-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+    .main{margin-left:var(--sidebar-w);flex:1;padding:2rem}
+    .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border)}
+    .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
+    .profile-header{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+    .profile-av{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;box-shadow:0 0 25px var(--glow-purple)}
+    .profile-name{font-size:1.6rem;font-weight:800}
+    .rank-badge{display:inline-block;padding:.3rem .8rem;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:100px;font-size:.8rem;font-weight:700;margin:.5rem 0}
+    .join-date{font-size:.85rem;color:var(--muted)}
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+    .stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.25rem;text-align:center}
+    .stat-box .val{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--neon-cyan)}
+    .stat-box .lbl{font-size:.8rem;color:var(--muted);margin-top:.25rem}
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem}
+    .card-title{font-weight:800;margin-bottom:1rem}
+    .heatmap{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;margin-bottom:1rem}
+    .heat-cell{aspect-ratio:1;border-radius:3px;background:var(--bg3)}.heat-cell.l1{background:rgba(139,92,246,.2)}.heat-cell.l2{background:rgba(139,92,246,.4)}.heat-cell.l3{background:rgba(139,92,246,.6)}.heat-cell.l4{background:rgba(139,92,246,.9)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:.75rem;text-align:left;border-bottom:1px solid var(--border);font-size:.9rem}
+    th{color:var(--muted);font-size:.8rem;text-transform:uppercase}
+    .badge-grid{display:flex;gap:.75rem;flex-wrap:wrap}
+    .badge-item{padding:.5rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:100px;font-size:.85rem;font-weight:600}
+    .btn{padding:.5rem 1.2rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;margin-top:1rem}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999}.overlay.show{display:block}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:1rem}.mobile-topbar{display:flex}.stats-row{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
+      <div class="nav-section"><div class="nav-label">Main</div>
+        <a href="dashboard.html" class="nav-item">🏠 Dashboard</a><a href="problems.html" class="nav-item">📚 Problem Library</a><a href="problem.html" class="nav-item">⚡ Daily Problem</a>
+        <a href="leaderboard.html" class="nav-item">🏆 Leaderboard</a><a href="sadhana.html" class="nav-item">🧘 Sadhana Mode</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Community</div>
+        <a href="battles.html" class="nav-item">👥 Battles</a><a href="knowledge-hub.html" class="nav-item">🎓 Knowledge Hub</a>
+        <a href="discussions.html" class="nav-item">💬 Discussions</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Account</div>
+        <a href="profile.html" class="nav-item active">👤 My Profile</a><a href="certificate.html" class="nav-item">📜 Certificates</a>
+        <a href="#" class="nav-item" onclick="logout();return false">🚪 Log Out</a>
+      </div>
+      <div class="sidebar-user"><div class="user-av" id="sidebarAv">?</div><div><div style="font-weight:700" id="sidebarName">—</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="mobile-topbar"><button class="hamburger" onclick="toggleSidebar()">☰</button><strong>Profile</strong></div>
+      <div class="profile-header" data-aos="fade-up">
+        <div class="profile-av" id="profileAv">?</div>
+        <div><div class="profile-name" id="profileName">—</div><div class="rank-badge" id="profileRank">Newbie</div><div class="join-date" id="joinDate">Joined —</div><button class="btn" onclick="editProfile()">Edit Profile</button></div>
+      </div>
+      <div class="stats-row" data-aos="fade-up">
+        <div class="stat-box"><div class="val" id="statXP">0</div><div class="lbl">Total XP</div></div>
+        <div class="stat-box"><div class="val" id="statRank">—</div><div class="lbl">College Rank</div></div>
+        <div class="stat-box"><div class="val" id="statSolved">0</div><div class="lbl">Solved</div></div>
+        <div class="stat-box"><div class="val" id="statStreak">0</div><div class="lbl">Streak</div></div>
+      </div>
+      <div class="card" data-aos="fade-up"><div class="card-title">📊 Activity Heatmap</div><div class="heatmap" id="heatmap"></div></div>
+      <div class="card" data-aos="fade-up"><div class="card-title">📋 Submission History</div>
+        <table><thead><tr><th>Problem</th><th>Status</th><th>Language</th><th>XP</th><th>Date</th></tr></thead>
+        <tbody id="subHistory"><tr><td colspan="5" style="color:var(--muted)">Loading...</td></tr></tbody></table>
+      </div>
+      <div class="card" data-aos="fade-up"><div class="card-title">🏅 Badges & Certificates</div><div class="badge-grid" id="badges"></div></div>
+    </div>
+  </div>
+  <script src="supabase.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({duration:700,once:true,offset:80});
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+    let profile=null;
+    async function onDbReady(){
+      const user=await requireAuth();if(!user)return;
+      profile=await getUserProfile(user.id);if(!profile)return;
+      const name=`${profile.first_name||''} ${profile.last_name||''}`.trim();
+      document.getElementById('sidebarAv').textContent=getInitials(profile.first_name,profile.last_name);
+      document.getElementById('sidebarName').textContent=name;
+      document.getElementById('profileAv').textContent=getInitials(profile.first_name,profile.last_name);
+      document.getElementById('profileName').textContent=name;
+      document.getElementById('profileRank').textContent=profile.rank_title||'Newbie';
+      document.getElementById('joinDate').textContent='Joined '+formatDate(profile.created_at);
+      document.getElementById('statXP').textContent=(profile.xp||0).toLocaleString();
+      document.getElementById('statSolved').textContent=profile.problems_solved||0;
+      document.getElementById('statStreak').textContent=profile.streak||0;
+      const rank=await getUserRank(user.id);
+      document.getElementById('statRank').textContent=rank?'#'+rank:'—';
+      const grid=document.getElementById('heatmap');
+      for(let i=0;i<112;i++){const c=document.createElement('div');c.className='heat-cell l'+Math.floor(Math.random()*5);grid.appendChild(c);}
+      loadSubmissions(user.id);
+      loadBadges(profile.xp||0);
+    }
+    async function loadSubmissions(userId){
+      try{
+        const {data}=await window.db.from('submissions').select('*').eq('user_id',userId).order('submitted_at',{ascending:false}).limit(20);
+        const problems=await getAllProblems();const pm={};problems.forEach(p=>pm[p.id]=p);
+        document.getElementById('subHistory').innerHTML=(data||[]).length?(data||[]).map(s=>{
+          const title=pm[s.problem_id]?.title||'Unknown';
+          const st=s.status==='correct'?'<span style="color:var(--neon-green)">✓ Correct</span>':'<span style="color:var(--neon-pink)">✗ Wrong</span>';
+          return `<tr><td>${title}</td><td>${st}</td><td>${s.language||'—'}</td><td class="mono">+${s.xp_gained||0}</td><td>${formatDate(s.submitted_at)}</td></tr>`;
+        }).join(''):'<tr><td colspan="5" style="color:var(--muted)">No submissions yet</td></tr>';
+      }catch(e){}
+    }
+    function loadBadges(xp){
+      const badges=[];
+      if(xp>=500)badges.push('🥉 Beginner Cert');if(xp>=2000)badges.push('🥈 Intermediate Cert');if(xp>=5000)badges.push('🏆 Master Cert');
+      if((profile?.streak||0)>=7)badges.push('🔥 Week Streak');if((profile?.problems_solved||0)>=10)badges.push('⚡ Problem Crusher');
+      document.getElementById('badges').innerHTML=badges.length?badges.map(b=>`<span class="badge-item">${b}</span>`).join(''):'<span style="color:var(--muted)">No badges yet — keep coding!</span>';
+    }
+    function editProfile(){
+      const college=prompt('Update college name:',profile.college||'');if(college===null)return;
+      window.db.from('users').update({college}).eq('id',profile.id).then(()=>{profile.college=college;alert('Profile updated!');});
+    }
+  </script>
+</body>
+</html>

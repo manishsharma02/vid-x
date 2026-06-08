@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Problems — VidX Admin</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-red:#ef4444;--neon-purple:#8b5cf6;--neon-blue:#3b82f6;--neon-cyan:#06b6d4;--neon-green:#10b981;--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--sidebar-w:260px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    .mono{font-family:'JetBrains Mono',monospace}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--neon-red);border-radius:2px}
+    .layout{display:flex;min-height:100vh}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto}
+    .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-red),#f97316);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
+    .admin-badge{padding:0 1.5rem;font-size:.8rem;color:var(--neon-red);font-weight:700;margin-top:.5rem}
+    .nav-section{padding:1rem 0}.nav-label{padding:0 1.5rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;border-left:3px solid transparent;transition:all .2s}
+    .nav-item:hover{color:var(--text);background:rgba(239,68,68,.05)}.nav-item.active{color:var(--text);border-left-color:var(--neon-red);background:rgba(239,68,68,.08)}
+    .sidebar-user{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border)}
+    .main{margin-left:var(--sidebar-w);flex:1;padding:2rem}
+    .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border)}
+    .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
+    .page-title{font-size:1.6rem;font-weight:800;margin-bottom:1.5rem}
+    .form-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:2rem}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .form-group{margin-bottom:1rem}.form-group.full{grid-column:1/-1}
+    .form-group label{display:block;font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:.4rem}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:.75rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif}
+    .form-group textarea{min-height:100px;resize:vertical}
+    .form-group select option{background:var(--bg3)}
+    .checkbox-group{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:.5rem}
+    .checkbox-group label{display:flex;align-items:center;gap:.4rem;font-size:.85rem;color:var(--muted);cursor:pointer}
+    .toggle-row{display:flex;align-items:center;gap:1rem;margin-top:.5rem}
+    .btn{padding:.65rem 1.4rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--neon-red),#f97316);color:#fff}
+    .search-bar{width:100%;padding:.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif;margin-bottom:1rem}
+    .table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:.85rem;text-align:left;border-bottom:1px solid var(--border);font-size:.9rem}
+    th{background:var(--bg3);color:var(--muted);font-size:.8rem;text-transform:uppercase}
+    .action-btn{background:none;border:none;cursor:pointer;font-size:1rem;padding:.25rem}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999}.overlay.show{display:block}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:1rem}.mobile-topbar{display:flex}.form-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="admin-dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
+      <div class="admin-badge">🔴 Admin Panel</div>
+      <div class="nav-section"><div class="nav-label">Control</div>
+        <a href="admin-dashboard.html" class="nav-item">📊 Dashboard</a>
+        <a href="admin-problems.html" class="nav-item active">📝 Manage Problems</a>
+        <a href="admin-students.html" class="nav-item">👥 Manage Students</a>
+        <a href="admin-leaderboard.html" class="nav-item">🏆 Manage Leaderboard</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">View</div>
+        <a href="index.html" class="nav-item">🌐 View Student Site</a>
+        <a href="dashboard.html" class="nav-item">👁 Preview Dashboard</a>
+      </div>
+      <div class="sidebar-user"><div style="font-weight:700">AD Admin</div><div style="font-size:.8rem;color:var(--neon-red)">Super Admin</div></div>
+    </aside>
+    <div class="main">
+      <div class="mobile-topbar"><button class="hamburger" onclick="toggleSidebar()">☰</button><strong>Manage Problems</strong></div>
+      <h1 class="page-title" data-aos="fade-up">📝 Add / Edit Problems</h1>
+      <div class="form-card" data-aos="fade-up">
+        <form id="problemForm">
+          <div class="form-grid">
+            <div class="form-group full"><label>Title</label><input type="text" id="title" required></div>
+            <div class="form-group"><label>Difficulty</label><select id="difficulty"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
+            <div class="form-group"><label>Topic</label><select id="topic"><option>Arrays</option><option>DP</option><option>Graphs</option><option>Trees</option><option>Strings</option><option>Math</option></select></div>
+            <div class="form-group"><label>XP Reward</label><input type="number" id="xpReward" value="50"></div>
+            <div class="form-group full"><label>Description</label><textarea id="description" required></textarea></div>
+            <div class="form-group full"><label>Tagged Companies</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" value="Google"> Google</label>
+                <label><input type="checkbox" value="Amazon"> Amazon</label>
+                <label><input type="checkbox" value="Microsoft"> Microsoft</label>
+                <label><input type="checkbox" value="Meta"> Meta</label>
+                <label><input type="checkbox" value="Apple"> Apple</label>
+              </div>
+            </div>
+            <div class="form-group"><label>Sample Input</label><textarea id="sampleInput" rows="3"></textarea></div>
+            <div class="form-group"><label>Sample Output</label><textarea id="sampleOutput" rows="3"></textarea></div>
+            <div class="form-group full"><label>Test Cases (JSON)</label><textarea id="testCases" rows="4" placeholder='[{"input":"5","expected":"25"}]'></textarea></div>
+            <div class="form-group full toggle-row">
+              <label><input type="checkbox" id="isDaily"> Set as Daily Problem</label>
+              <input type="date" id="dailyDate">
+            </div>
+          </div>
+          <button type="submit" class="btn">Add Problem +</button>
+        </form>
+      </div>
+      <input type="text" class="search-bar" id="searchBar" placeholder="Search problems..." oninput="filterTable()">
+      <div class="table-wrap" data-aos="fade-up">
+        <table><thead><tr><th>#</th><th>Title</th><th>Difficulty</th><th>Topic</th><th>Solves</th><th>Daily</th><th>Actions</th></tr></thead>
+        <tbody id="problemTable"><tr><td colspan="7" style="color:var(--muted);text-align:center">Loading...</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+  <script src="supabase.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({duration:700,once:true,offset:80});
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+    let allProblems=[];
+    function onDbReady(){if(!requireAdmin())return;loadProblems();}
+    async function loadProblems(){
+      allProblems=await getAllProblems();renderTable(allProblems);
+    }
+    function renderTable(list){
+      document.getElementById('problemTable').innerHTML=list.length?list.map((p,i)=>`
+        <tr><td class="mono">${i+1}</td><td>${p.title}</td><td>${p.difficulty||''}</td><td>${p.topic||''}</td><td>${p.solve_count||0}</td><td>${p.is_daily?'✅':'—'}</td>
+        <td><button class="action-btn" onclick="deleteProblem('${p.id}')" title="Delete">🗑️</button></td></tr>
+      `).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--muted)">No problems</td></tr>';
+    }
+    function filterTable(){
+      const q=document.getElementById('searchBar').value.toLowerCase();
+      renderTable(allProblems.filter(p=>(p.title||'').toLowerCase().includes(q)));
+    }
+    document.getElementById('problemForm').addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      const companies=[...document.querySelectorAll('.checkbox-group input:checked')].map(c=>c.value);
+      let testCases=[];
+      try{testCases=JSON.parse(document.getElementById('testCases').value||'[]');}catch(err){alert('Invalid test cases JSON');return;}
+      const isDaily=document.getElementById('isDaily').checked;
+      const data={
+        title:document.getElementById('title').value.trim(),
+        difficulty:document.getElementById('difficulty').value,
+        topic:document.getElementById('topic').value,
+        xp_reward:parseInt(document.getElementById('xpReward').value)||50,
+        description:document.getElementById('description').value.trim(),
+        companies,sample_input:document.getElementById('sampleInput').value,
+        sample_output:document.getElementById('sampleOutput').value,
+        test_cases:testCases,is_daily:isDaily,
+        daily_date:isDaily?document.getElementById('dailyDate').value||new Date().toISOString().split('T')[0]:null
+      };
+      try{
+        const {error}=await window.db.from('problems').insert(data);
+        if(error)throw error;
+        alert('Problem added!');document.getElementById('problemForm').reset();loadProblems();
+      }catch(err){alert('Error: '+err.message);}
+    });
+    async function deleteProblem(id){
+      if(!confirm('Delete this problem?'))return;
+      try{await window.db.from('problems').delete().eq('id',id);loadProblems();}catch(e){alert(e.message);}
+    }
+  </script>
+</body>
+</html>

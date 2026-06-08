@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Students — VidX Admin</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-red:#ef4444;--neon-cyan:#06b6d4;--neon-green:#10b981;--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--sidebar-w:260px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    .mono{font-family:'JetBrains Mono',monospace}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--neon-red);border-radius:2px}
+    .layout{display:flex;min-height:100vh}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto}
+    .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-red),#f97316);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
+    .admin-badge{padding:0 1.5rem;font-size:.8rem;color:var(--neon-red);font-weight:700;margin-top:.5rem}
+    .nav-section{padding:1rem 0}.nav-label{padding:0 1.5rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;border-left:3px solid transparent;transition:all .2s}
+    .nav-item:hover{color:var(--text);background:rgba(239,68,68,.05)}.nav-item.active{color:var(--text);border-left-color:var(--neon-red);background:rgba(239,68,68,.08)}
+    .sidebar-user{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border)}
+    .main{margin-left:var(--sidebar-w);flex:1;padding:2rem}
+    .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border)}
+    .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
+    .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+    .page-title{font-size:1.6rem;font-weight:800}
+    .toolbar{display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap}
+    .search-bar{flex:1;min-width:200px;padding:.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif}
+    .btn{padding:.65rem 1.2rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;background:linear-gradient(135deg,var(--neon-red),#f97316);color:#fff;text-decoration:none}
+    .btn-ghost{background:var(--bg3);border:1px solid var(--border);color:var(--text)}
+    .table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow-x:auto}
+    table{width:100%;border-collapse:collapse;min-width:800px}
+    th,td{padding:.85rem;text-align:left;border-bottom:1px solid var(--border);font-size:.9rem}
+    th{background:var(--bg3);color:var(--muted);font-size:.8rem;text-transform:uppercase}
+    .action-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.75rem;color:var(--text);margin-right:.25rem;font-family:'Syne',sans-serif;font-weight:600}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999}.overlay.show{display:block}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:1rem}.mobile-topbar{display:flex}}
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="admin-dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
+      <div class="admin-badge">🔴 Admin Panel</div>
+      <div class="nav-section"><div class="nav-label">Control</div>
+        <a href="admin-dashboard.html" class="nav-item">📊 Dashboard</a>
+        <a href="admin-problems.html" class="nav-item">📝 Manage Problems</a>
+        <a href="admin-students.html" class="nav-item active">👥 Manage Students</a>
+        <a href="admin-leaderboard.html" class="nav-item">🏆 Manage Leaderboard</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">View</div>
+        <a href="index.html" class="nav-item">🌐 View Student Site</a>
+        <a href="dashboard.html" class="nav-item">👁 Preview Dashboard</a>
+      </div>
+      <div class="sidebar-user"><div style="font-weight:700">AD Admin</div><div style="font-size:.8rem;color:var(--neon-red)">Super Admin</div></div>
+    </aside>
+    <div class="main">
+      <div class="mobile-topbar"><button class="hamburger" onclick="toggleSidebar()">☰</button><strong>Manage Students</strong></div>
+      <div class="page-header" data-aos="fade-up"><h1 class="page-title">👥 Manage Students</h1></div>
+      <div class="toolbar" data-aos="fade-up">
+        <input type="text" class="search-bar" id="searchBar" placeholder="Search by name or email..." oninput="filterTable()">
+        <button class="btn btn-ghost" onclick="exportCSV()">Export CSV</button>
+      </div>
+      <div class="table-wrap" data-aos="fade-up">
+        <table><thead><tr><th>Name</th><th>Email</th><th>Branch</th><th>Year</th><th>XP</th><th>Streak</th><th>Rank</th><th>Actions</th></tr></thead>
+        <tbody id="studentTable"><tr><td colspan="8" style="text-align:center;color:var(--muted)">Loading...</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+  <script src="supabase.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({duration:700,once:true,offset:80});
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+    let allStudents=[];
+    function onDbReady(){if(!requireAdmin())return;loadStudents();}
+    async function loadStudents(){allStudents=await adminGetAllStudents();renderTable(allStudents);}
+    function renderTable(list){
+      document.getElementById('studentTable').innerHTML=list.length?list.map(s=>{
+        const name=`${s.first_name||''} ${s.last_name||''}`.trim()||'—';
+        return `<tr><td>${name}</td><td>${s.email||''}</td><td>${s.branch||'—'}</td><td>${s.year||'—'}</td>
+          <td class="mono">${(s.xp||0).toLocaleString()}</td><td>${s.streak||0}</td><td>${s.rank_title||'Newbie'}</td>
+          <td><button class="action-btn" onclick="editXP('${s.id}',${s.xp||0})">Edit XP</button>
+          <button class="action-btn" onclick="resetStreak('${s.id}')">Reset Streak</button></td></tr>`;
+      }).join(''):'<tr><td colspan="8" style="text-align:center;color:var(--muted)">No students</td></tr>';
+    }
+    function filterTable(){
+      const q=document.getElementById('searchBar').value.toLowerCase();
+      renderTable(allStudents.filter(s=>{
+        const name=`${s.first_name||''} ${s.last_name||''}`.toLowerCase();
+        return name.includes(q)||(s.email||'').toLowerCase().includes(q);
+      }));
+    }
+    async function editXP(id,current){
+      const val=prompt('Enter new XP:',current);if(val===null)return;
+      const xp=parseInt(val);if(isNaN(xp))return;
+      const result=await adminUpdateXP(id,xp);
+      alert(result.success?'XP updated!':result.error);loadStudents();
+    }
+    async function resetStreak(id){
+      if(!confirm('Reset streak for this student?'))return;
+      await adminResetStreak(id);loadStudents();
+    }
+    function exportCSV(){
+      const headers=['Name','Email','Branch','Year','XP','Streak','Rank'];
+      const rows=allStudents.map(s=>[`${s.first_name||''} ${s.last_name||''}`,s.email,s.branch,s.year,s.xp,s.streak,s.rank_title]);
+      const csv=[headers,...rows].map(r=>r.map(c=>`"${c||''}"`).join(',')).join('\n');
+      const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vidx-students.csv';a.click();
+    }
+  </script>
+</body>
+</html>

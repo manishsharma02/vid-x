@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — VidX</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--bg4:#111827;--neon-blue:#3b82f6;--neon-purple:#8b5cf6;--neon-cyan:#06b6d4;--neon-pink:#ec4899;--neon-green:#10b981;--neon-yellow:#f59e0b;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);--sidebar-w:260px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    .mono{font-family:'JetBrains Mono',monospace}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--neon-purple);border-radius:2px}
+    .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.12;pointer-events:none;z-index:0;animation:orbFloat 8s ease-in-out infinite}
+    .orb-1{width:400px;height:400px;background:#8b5cf6;top:-100px;left:-100px}.orb-2{width:300px;height:300px;background:#3b82f6;bottom:-100px;right:-100px;animation-delay:3s}
+    @keyframes orbFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-30px)}}
+    .layout{display:flex;min-height:100vh;position:relative;z-index:1}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto}
+    .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
+    .nav-section{padding:1rem 0}.nav-label{padding:0 1.5rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;border-left:3px solid transparent;transition:all .2s}
+    .nav-item:hover{color:var(--text);background:rgba(139,92,246,.05);box-shadow:inset 0 0 20px rgba(139,92,246,.05)}
+    .nav-item.active{color:var(--text);border-left-color:var(--neon-purple);background:rgba(139,92,246,.08)}
+    .sidebar-user{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
+    .user-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+    .user-name{font-weight:700;font-size:.9rem}.user-rank{font-size:.75rem;color:var(--neon-purple);font-weight:600}
+    .main{margin-left:var(--sidebar-w);flex:1;min-height:100vh}
+    .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+    .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 2rem;border-bottom:1px solid var(--border)}
+    .topbar h1{font-size:1.4rem;font-weight:800}
+    .topbar-actions{display:flex;align-items:center;gap:1rem}
+    .streak-badge{display:flex;align-items:center;gap:.4rem;padding:.4rem .9rem;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:100px;font-weight:700;font-size:.85rem;color:var(--neon-yellow)}
+    .notif-wrap{position:relative}
+    .notif-btn{position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.5rem .75rem;cursor:pointer;font-size:1.1rem}
+    .notif-badge-count{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;background:var(--neon-pink);color:#fff;font-size:.65rem;font-weight:700;border-radius:100px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+    .notif-panel{display:none;position:absolute;top:calc(100% + 8px);right:0;width:340px;max-height:420px;background:var(--bg2);border:1px solid var(--border-glow);border-radius:16px;box-shadow:0 0 30px var(--glow-purple);z-index:200;overflow:hidden}
+    .notif-panel.show{display:flex;flex-direction:column}
+    .notif-panel-header{display:flex;align-items:center;justify-content:space-between;padding:1rem;border-bottom:1px solid var(--border);font-weight:800;font-size:.95rem}
+    .notif-panel-body{overflow-y:auto;flex:1;max-height:320px}
+    .notif-panel-item{padding:.85rem 1rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s}
+    .notif-panel-item:hover{background:rgba(139,92,246,.05)}
+    .notif-panel-item.unread{border-left:3px solid var(--neon-purple);background:rgba(139,92,246,.04)}
+    .notif-panel-title{font-weight:700;font-size:.85rem;margin-bottom:.25rem;color:var(--neon-cyan)}
+    .notif-panel-msg{font-size:.85rem;color:var(--muted);line-height:1.5}
+    .notif-panel-time{font-size:.7rem;color:var(--muted);margin-top:.35rem}
+    .notif-mark-all{background:none;border:none;color:var(--neon-purple);font-family:'Syne',sans-serif;font-weight:700;font-size:.75rem;cursor:pointer}
+    .notif-toast{position:fixed;bottom:2rem;right:2rem;max-width:360px;padding:1rem 1.25rem;background:var(--bg2);border:1px solid var(--neon-purple);border-radius:14px;box-shadow:0 0 25px var(--glow-purple);z-index:9999;transform:translateX(120%);opacity:0;transition:all .4s ease}
+    .notif-toast.show{transform:translateX(0);opacity:1}
+    .notif-toast-title{font-weight:800;font-size:.9rem;color:var(--neon-cyan);margin-bottom:.35rem}
+    .notif-toast-msg{font-size:.85rem;color:var(--muted)}
+    .content{padding:1.5rem 2rem;display:grid;grid-template-columns:1fr 320px;gap:1.5rem}
+    .content-main{display:flex;flex-direction:column;gap:1.5rem}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+    .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.25rem;transition:all .3s}
+    .stat-card:hover{border-color:var(--border-glow);transform:translateY(-2px);box-shadow:0 0 20px var(--glow-purple)}
+    .stat-label{font-size:.8rem;color:var(--muted);font-weight:600;margin-bottom:.5rem}
+    .stat-value{font-family:'JetBrains Mono',monospace;font-size:1.8rem;font-weight:700}
+    .stat-card.purple .stat-value{color:var(--neon-purple)}.stat-card.blue .stat-value{color:var(--neon-blue)}.stat-card.green .stat-value{color:var(--neon-green)}.stat-card.yellow .stat-value{color:var(--neon-yellow)}
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;transition:all .3s}
+    .card:hover{border-color:var(--border-glow)}
+    .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+    .card-title{font-size:1.1rem;font-weight:800}
+    .tag{display:inline-block;padding:.2rem .6rem;border-radius:100px;font-size:.75rem;font-weight:700;margin-right:.4rem}
+    .tag-easy{background:rgba(16,185,129,.15);color:var(--neon-green)}.tag-med{background:rgba(245,158,11,.15);color:var(--neon-yellow)}.tag-hard{background:rgba(236,72,153,.15);color:var(--neon-pink)}
+    .tag-topic{background:rgba(139,92,246,.15);color:var(--neon-purple)}
+    .countdown-pill{padding:.3rem .8rem;background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.3);border-radius:100px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--neon-pink);font-weight:700}
+    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.65rem 1.4rem;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;text-decoration:none;cursor:pointer;border:none;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;box-shadow:0 4px 15px var(--glow-purple);transition:transform .2s}
+    .btn:hover{transform:translateY(-2px)}
+    .challenge-meta{display:flex;gap:1.5rem;margin:1rem 0;font-size:.85rem;color:var(--muted)}
+    .challenge-desc{color:var(--muted);font-size:.9rem;margin-bottom:1rem;line-height:1.7}
+    .heatmap{display:grid;grid-template-columns:repeat(16,1fr);gap:3px}
+    .heat-cell{aspect-ratio:1;border-radius:3px;background:var(--bg3);transition:background .2s}
+    .heat-cell.l1{background:rgba(139,92,246,.2)}.heat-cell.l2{background:rgba(139,92,246,.4)}.heat-cell.l3{background:rgba(139,92,246,.6)}.heat-cell.l4{background:rgba(139,92,246,.9)}
+    .progress-wrap{margin-top:1rem}
+    .progress-bar{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;margin:.75rem 0}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--neon-purple),var(--neon-blue));border-radius:4px;transition:width 1s}
+    .progress-text{font-size:.85rem;color:var(--muted)}
+    .rank-badge{display:inline-block;padding:.3rem .8rem;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:100px;font-size:.8rem;font-weight:700;margin-bottom:.5rem}
+    .side-col{display:flex;flex-direction:column;gap:1rem}
+    .mini-rank{display:flex;align-items:center;gap:.6rem;padding:.6rem 0;border-bottom:1px solid var(--border)}
+    .mini-rank:last-child{border:none}
+    .mini-pos{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--muted);width:24px;font-size:.8rem}
+    .mini-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700}
+    .mini-name{flex:1;font-size:.85rem;font-weight:600}
+    .mini-xp{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--neon-cyan)}
+    .notif-item{padding:.6rem 0;border-bottom:1px solid var(--border);font-size:.85rem}
+    .notif-item.unread{border-left:3px solid var(--neon-purple);padding-left:.75rem}
+    .notif-time{font-size:.75rem;color:var(--muted)}
+    .vote-btns{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}
+    .vote-btn{padding:.4rem .8rem;background:var(--bg3);border:1px solid var(--border);border-radius:100px;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:600;color:var(--text);cursor:pointer;transition:all .2s}
+    .vote-btn:hover,.vote-btn.selected{border-color:var(--neon-purple);background:rgba(139,92,246,.15)}
+    .vote-bar{margin-top:.75rem}.vote-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;font-size:.8rem}
+    .vote-bar-track{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+    .vote-bar-fill{height:100%;background:linear-gradient(90deg,var(--neon-purple),var(--neon-cyan));border-radius:3px}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999}
+    .overlay.show{display:block}
+    @media(max-width:1100px){.content{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:768px){
+      .sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}
+      .main{margin-left:0}.mobile-topbar{display:flex}.topbar{padding:1rem}
+      .content{padding:1rem}.stats-grid{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div><div class="orb orb-2"></div>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
+      <div class="nav-section"><div class="nav-label">Main</div>
+        <a href="dashboard.html" class="nav-item active">🏠 Dashboard</a>
+        <a href="problems.html" class="nav-item">📚 Problem Library</a>
+        <a href="problem.html" class="nav-item">⚡ Daily Problem</a>
+        <a href="leaderboard.html" class="nav-item">🏆 Leaderboard</a>
+        <a href="sadhana.html" class="nav-item">🧘 Sadhana Mode</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Community</div>
+        <a href="battles.html" class="nav-item">👥 Battles</a>
+        <a href="knowledge-hub.html" class="nav-item">🎓 Knowledge Hub</a>
+        <a href="discussions.html" class="nav-item">💬 Discussions</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Account</div>
+        <a href="profile.html" class="nav-item">👤 My Profile</a>
+        <a href="certificate.html" class="nav-item">📜 Certificates</a>
+        <a href="#" class="nav-item" onclick="logout();return false">🚪 Log Out</a>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-av" id="sidebarAv">?</div>
+        <div><div class="user-name" id="sidebarName">Loading...</div><div class="user-rank" id="sidebarRank">Newbie</div></div>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="mobile-topbar"><button class="hamburger" onclick="toggleSidebar()">☰</button><strong>VidX</strong></div>
+      <div class="topbar">
+        <h1 id="greeting">Loading...</h1>
+        <div class="topbar-actions">
+          <div class="streak-badge">🔥 <span id="streakCount">0</span> day streak</div>
+          <div class="notif-wrap">
+            <button class="notif-btn" id="notifBtn" onclick="toggleNotifPanel()">🔔<span class="notif-badge-count" id="notifBadge" style="display:none">0</span></button>
+            <div class="notif-panel" id="notifPanel">
+              <div class="notif-panel-header"><span>Notifications</span><button class="notif-mark-all" onclick="markAllNotifsRead()">Mark All Read</button></div>
+              <div class="notif-panel-body" id="notifPanelBody"><p style="color:var(--muted);padding:1rem;font-size:.85rem">Loading...</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="content-main">
+          <div class="stats-grid">
+            <div class="stat-card purple" data-aos="fade-up"><div class="stat-label">Total XP</div><div class="stat-value" id="statXP">—</div></div>
+            <div class="stat-card blue" data-aos="fade-up" data-aos-delay="50"><div class="stat-label">College Rank</div><div class="stat-value" id="statRank">—</div></div>
+            <div class="stat-card green" data-aos="fade-up" data-aos-delay="100"><div class="stat-label">Problems Solved</div><div class="stat-value" id="statSolved">—</div></div>
+            <div class="stat-card yellow" data-aos="fade-up" data-aos-delay="150"><div class="stat-label">Current Streak</div><div class="stat-value" id="statStreak">—</div></div>
+          </div>
+          <div class="card" data-aos="fade-up" id="challengeCard">
+            <div class="card-header"><span class="card-title">⚡ Today's Challenge</span><span class="countdown-pill mono" id="challengeCountdown">--:--:--</span></div>
+            <div id="challengeContent"><p style="color:var(--muted)">Loading challenge...</p></div>
+          </div>
+          <div class="card" data-aos="fade-up">
+            <div class="card-title" style="margin-bottom:1rem">📊 Activity Heatmap</div>
+            <div class="heatmap" id="heatmap"></div>
+          </div>
+          <div class="card" data-aos="fade-up">
+            <div class="card-title">🎖️ Rank Progress</div>
+            <div class="progress-wrap">
+              <span class="rank-badge" id="rankBadge">Newbie</span>
+              <p class="progress-text" id="rankProgressText">Loading...</p>
+              <div class="progress-bar"><div class="progress-fill" id="rankProgressBar" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="side-col">
+          <div class="card" data-aos="fade-left"><div class="card-title" style="margin-bottom:.75rem">🏆 Mini Leaderboard</div><div id="miniLeaderboard"><p style="color:var(--muted);font-size:.85rem">Loading...</p></div></div>
+          <div class="card" data-aos="fade-left" data-aos-delay="50">
+            <div class="card-header"><span class="card-title">🔔 Notifications</span><button class="notif-mark-all" onclick="markAllNotifsRead()">Mark All</button></div>
+            <div id="notifList"><p style="color:var(--muted);font-size:.85rem">Loading...</p></div>
+          </div>
+          <div class="card" data-aos="fade-left" data-aos-delay="100"><div class="card-title" style="margin-bottom:.75rem">📋 Weekly Report</div><p style="font-size:.85rem;color:var(--muted)" id="weeklyReport">Loading...</p></div>
+          <div class="card" data-aos="fade-left" data-aos-delay="150">
+            <div class="card-title">🗳️ Vote for Tomorrow</div>
+            <p style="font-size:.8rem;color:var(--muted);margin-top:.25rem">Pick tomorrow's topic (1 vote/day)</p>
+            <div class="vote-btns" id="voteBtns">
+              <button class="vote-btn" data-topic="Arrays">Arrays</button>
+              <button class="vote-btn" data-topic="DP">DP</button>
+              <button class="vote-btn" data-topic="Graphs">Graphs</button>
+              <button class="vote-btn" data-topic="Trees">Trees</button>
+              <button class="vote-btn" data-topic="Strings">Strings</button>
+            </div>
+            <div class="vote-bar" id="voteResults" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="notif-toast" id="notifToast"><div class="notif-toast-title" id="toastTitle"></div><div class="notif-toast-msg" id="toastMsg"></div></div>
+  <script src="supabase.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({duration:700,once:true,offset:80});
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+    let currentUser=null,profile=null,lastNotifIds=new Set(),notifPollTimer=null;
+    const RANKS=[{title:'Newbie',min:0,max:500},{title:'Debug Warrior',min:500,max:2000},{title:'Code Samurai',min:2000,max:5000},{title:'Legend',min:5000,max:Infinity}];
+
+    function toggleNotifPanel(){document.getElementById('notifPanel').classList.toggle('show');}
+    document.addEventListener('click',e=>{if(!e.target.closest('.notif-wrap'))document.getElementById('notifPanel').classList.remove('show');});
+
+    function showNotifToast(title,msg){
+      document.getElementById('toastTitle').textContent=title;
+      document.getElementById('toastMsg').textContent=msg;
+      const t=document.getElementById('notifToast');t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'),5000);
+    }
+
+    function renderNotifItem(n,clickable=true){
+      const title=getNotificationTitle(n);
+      const cls=n.is_read?'':' unread';
+      const click=clickable?`onclick="openNotification('${n.id}')" style="cursor:pointer"`:'';
+      return `<div class="notif-panel-item${cls}" ${click}><div class="notif-panel-title">${title}</div><div class="notif-panel-msg">${n.message}</div><div class="notif-panel-time">${formatDate(n.created_at)} · ${new Date(n.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+    }
+
+    async function openNotification(id){
+      await markNotificationRead(id);
+      loadNotifications();
+    }
+
+    async function markAllNotifsRead(){
+      await markAllNotificationsRead(currentUser.id);
+      loadNotifications();
+    }
+
+    async function onDbReady(){
+      currentUser=await requireAuth();if(!currentUser)return;
+      profile=await getUserProfile(currentUser.id);
+      if(!profile)return;
+      document.getElementById('greeting').textContent=`${getGreeting()}, ${profile.first_name||'Coder'} 👋`;
+      document.getElementById('sidebarAv').textContent=getInitials(profile.first_name,profile.last_name);
+      document.getElementById('sidebarName').textContent=`${profile.first_name||''} ${profile.last_name||''}`.trim();
+      document.getElementById('sidebarRank').textContent=profile.rank_title||'Newbie';
+      document.getElementById('streakCount').textContent=profile.streak||0;
+      document.getElementById('statXP').textContent=(profile.xp||0).toLocaleString();
+      document.getElementById('statSolved').textContent=profile.problems_solved||0;
+      document.getElementById('statStreak').textContent=profile.streak||0;
+      const rank=await getUserRank(currentUser.id);
+      document.getElementById('statRank').textContent=rank?'#'+rank:'—';
+      loadRankProgress(profile.xp||0);
+      loadChallenge();
+      loadHeatmap();
+      loadMiniLeaderboard();
+      await loadNotifications();
+      loadWeeklyReport();
+      setupVoting();
+      setInterval(()=>{document.getElementById('challengeCountdown').textContent=getMidnightCountdown().formatted;},1000);
+      notifPollTimer=setInterval(loadNotifications,30000);
+    }
+
+    function loadRankProgress(xp){
+      let current=RANKS[0],next=RANKS[1];
+      for(let i=0;i<RANKS.length;i++){if(xp>=RANKS[i].min){current=RANKS[i];next=RANKS[i+1]||null;}}
+      document.getElementById('rankBadge').textContent=current.title;
+      if(next){const needed=next.min-xp;const pct=Math.min(100,((xp-current.min)/(next.min-current.min))*100);
+        document.getElementById('rankProgressText').textContent=`${needed.toLocaleString()} XP more to reach ${next.title}`;
+        document.getElementById('rankProgressBar').style.width=pct+'%';
+      }else{document.getElementById('rankProgressText').textContent='Maximum rank achieved!';document.getElementById('rankProgressBar').style.width='100%';}
+    }
+
+    async function loadChallenge(){
+      const p=await getDailyProblem();const el=document.getElementById('challengeContent');
+      if(!p){el.innerHTML='<p style="color:var(--muted)">No challenge available yet.</p>';return;}
+      const diff=p.difficulty||'Beginner';
+      const diffClass=diff==='Advanced'?'tag-hard':diff==='Intermediate'?'tag-med':'tag-easy';
+      el.innerHTML=`<div><span class="tag ${diffClass}">${diff}</span><span class="tag tag-topic">${p.topic||'General'}</span></div>
+        <h3 style="font-size:1.2rem;font-weight:800;margin:.75rem 0">${p.title}</h3>
+        <p class="challenge-desc">${(p.description||'').substring(0,200)}...</p>
+        <div class="challenge-meta"><span>Solved by ${p.solve_count||0} students</span><span>⭐ ${p.xp_reward||50} XP reward</span></div>
+        <a href="problem.html?id=${p.id}" class="btn">Solve Now →</a>`;
+    }
+
+    function loadHeatmap(){
+      const grid=document.getElementById('heatmap');
+      for(let i=0;i<112;i++){const cell=document.createElement('div');cell.className='heat-cell l'+Math.floor(Math.random()*5);grid.appendChild(cell);}
+    }
+
+    async function loadMiniLeaderboard(){
+      const students=await getLeaderboard(5);
+      document.getElementById('miniLeaderboard').innerHTML=students.map((s,i)=>
+        `<div class="mini-rank"><span class="mini-pos">#${i+1}</span><div class="mini-av">${getInitials(s.first_name,s.last_name)}</div><span class="mini-name">${s.first_name||s.email}</span><span class="mini-xp">${(s.xp||0).toLocaleString()}</span></div>`
+      ).join('')||'<p style="color:var(--muted);font-size:.85rem">No data</p>';
+    }
+
+    async function loadNotifications(){
+      const notifs=await getNotifications(currentUser.id,30);
+      const unread=notifs.filter(n=>!n.is_read).length;
+      const badge=document.getElementById('notifBadge');
+      badge.style.display=unread?'flex':'none';
+      badge.textContent=unread>9?'9+':unread;
+
+      const newUnread=notifs.filter(n=>!n.is_read&&!lastNotifIds.has(n.id));
+      if(lastNotifIds.size>0&&newUnread.length){
+        const latest=newUnread[0];
+        showNotifToast(getNotificationTitle(latest),latest.message);
+      }
+      notifs.forEach(n=>lastNotifIds.add(n.id));
+
+      const html=notifs.length?notifs.map(n=>renderNotifItem(n)).join(''):'<p style="color:var(--muted);padding:1rem;font-size:.85rem">No notifications yet</p>';
+      document.getElementById('notifPanelBody').innerHTML=html;
+      document.getElementById('notifList').innerHTML=notifs.length?notifs.slice(0,5).map(n=>{
+        const title=getNotificationTitle(n);
+        return `<div class="notif-item ${n.is_read?'':'unread'}" onclick="openNotification('${n.id}')" style="cursor:pointer"><strong style="color:var(--neon-cyan);font-size:.8rem">${title}</strong><div>${n.message}</div><div class="notif-time">${formatDate(n.created_at)}</div></div>`;
+      }).join(''):'<p style="color:var(--muted);font-size:.85rem">No notifications</p>';
+    }
+
+    async function loadWeeklyReport(){
+      document.getElementById('weeklyReport').innerHTML=`You've solved <strong>${profile.problems_solved||0}</strong> problems total with <strong>${profile.streak||0}</strong> day streak. Keep pushing — your batch is watching!`;
+    }
+
+    async function setupVoting(){
+      const todayVote=await getTodayVote(currentUser.id);
+      const topics=['Arrays','DP','Graphs','Trees','Strings'];
+      if(todayVote){
+        document.querySelectorAll('.vote-btn').forEach(b=>{b.disabled=true;if(b.dataset.topic===todayVote.vote_for)b.classList.add('selected');});
+        showVoteResults();
+      }else{
+        document.querySelectorAll('.vote-btn').forEach(btn=>{
+          btn.addEventListener('click',async()=>{
+            const topic=btn.dataset.topic;
+            const name=`${profile.first_name||''} ${profile.last_name||''}`.trim();
+            const result=await submitVote(currentUser.id,topic,name,profile.email);
+            if(result.success){document.querySelectorAll('.vote-btn').forEach(b=>{b.disabled=true;if(b.dataset.topic===topic)b.classList.add('selected');});showVoteResults();}
+            else alert(result.error);
+          });
+        });
+      }
+    }
+
+    async function showVoteResults(){
+      const today=new Date().toISOString().split('T')[0];
+      const counts=await getVoteCounts(today);const total=Object.values(counts).reduce((a,b)=>a+b,0)||1;
+      const topics=['Arrays','DP','Graphs','Trees','Strings'];
+      document.getElementById('voteResults').style.display='block';
+      document.getElementById('voteResults').innerHTML=topics.map(t=>{
+        const c=counts[t]||0;const pct=Math.round((c/total)*100);
+        return `<div class="vote-row"><span style="width:60px">${t}</span><div class="vote-bar-track"><div class="vote-bar-fill" style="width:${pct}%"></div></div><span class="mono">${c}</span></div>`;
+      }).join('');
+    }
+  </script>
+</body>
+</html>

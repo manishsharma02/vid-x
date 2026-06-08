@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discussions — VidX</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-purple:#8b5cf6;--neon-blue:#3b82f6;--neon-cyan:#06b6d4;--neon-pink:#ec4899;--neon-green:#10b981;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);--sidebar-w:260px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--neon-purple);border-radius:2px}
+    .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.12;pointer-events:none;z-index:0}.orb-1{width:300px;height:300px;background:#06b6d4;bottom:-50px;left:30%}
+    .layout{display:flex;min-height:100vh;position:relative;z-index:1}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto}
+    .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
+    .nav-section{padding:1rem 0}.nav-label{padding:0 1.5rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;border-left:3px solid transparent;transition:all .2s}
+    .nav-item:hover{color:var(--text);background:rgba(139,92,246,.05)}.nav-item.active{color:var(--text);border-left-color:var(--neon-purple);background:rgba(139,92,246,.08)}
+    .sidebar-user{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
+    .user-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+    .main{margin-left:var(--sidebar-w);flex:1;padding:2rem}
+    .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border)}
+    .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
+    .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+    .page-title{font-size:1.8rem;font-weight:800}
+    .filters{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+    .filter-btn{padding:.5rem 1rem;background:var(--bg2);border:1px solid var(--border);border-radius:100px;color:var(--muted);font-family:'Syne',sans-serif;font-weight:600;font-size:.85rem;cursor:pointer}
+    .filter-btn.active{background:rgba(139,92,246,.15);border-color:var(--neon-purple);color:var(--text)}
+    .btn{padding:.65rem 1.4rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;box-shadow:0 4px 15px var(--glow-purple)}
+    .post-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.25rem;margin-bottom:1rem;cursor:pointer;transition:all .3s}
+    .post-card:hover{border-color:var(--border-glow);transform:translateY(-2px);box-shadow:0 0 20px var(--glow-purple)}
+    .post-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+    .post-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700}
+    .post-author{font-weight:700;font-size:.9rem}.post-time{font-size:.75rem;color:var(--muted)}
+    .post-title{font-size:1.05rem;font-weight:800;margin-bottom:.5rem}
+    .post-preview{color:var(--muted);font-size:.9rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .post-meta{display:flex;gap:1rem;margin-top:.75rem;font-size:.85rem;color:var(--muted)}
+    .type-badge{padding:.15rem .5rem;border-radius:100px;font-size:.7rem;font-weight:700;background:rgba(139,92,246,.15);color:var(--neon-purple)}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;align-items:center;justify-content:center;padding:1rem}
+    .modal.show{display:flex}
+    .modal-card{background:var(--bg2);border:1px solid var(--border-glow);border-radius:16px;padding:2rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
+    .modal-card h2{font-size:1.3rem;font-weight:800;margin-bottom:1.5rem}
+    .form-group{margin-bottom:1rem}.form-group label{display:block;font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:.4rem}
+    .form-group input,.form-group textarea,.form-group select{width:100%;padding:.75rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif}
+    .form-group textarea{min-height:120px;resize:vertical}
+    .reply-box{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border)}
+    .reply-item{padding:.75rem 0;border-bottom:1px solid var(--border);font-size:.9rem}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:998}.overlay.show{display:block}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:1rem}.mobile-topbar{display:flex}}
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
+      <div class="nav-section"><div class="nav-label">Main</div>
+        <a href="dashboard.html" class="nav-item">🏠 Dashboard</a><a href="problems.html" class="nav-item">📚 Problem Library</a><a href="problem.html" class="nav-item">⚡ Daily Problem</a>
+        <a href="leaderboard.html" class="nav-item">🏆 Leaderboard</a><a href="sadhana.html" class="nav-item">🧘 Sadhana Mode</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Community</div>
+        <a href="battles.html" class="nav-item">👥 Battles</a><a href="knowledge-hub.html" class="nav-item">🎓 Knowledge Hub</a>
+        <a href="discussions.html" class="nav-item active">💬 Discussions</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Account</div>
+        <a href="profile.html" class="nav-item">👤 My Profile</a><a href="certificate.html" class="nav-item">📜 Certificates</a>
+        <a href="#" class="nav-item" onclick="logout();return false">🚪 Log Out</a>
+      </div>
+      <div class="sidebar-user"><div class="user-av" id="sidebarAv">?</div><div><div style="font-weight:700" id="sidebarName">—</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="mobile-topbar"><button class="hamburger" onclick="toggleSidebar()">☰</button><strong>Discussions</strong></div>
+      <div class="page-header" data-aos="fade-up">
+        <h1 class="page-title">💬 Community Q&A</h1>
+        <button class="btn" onclick="openNewPost()">New Post +</button>
+      </div>
+      <div class="filters" data-aos="fade-up">
+        <button class="filter-btn active" onclick="filterPosts('all',this)">All</button>
+        <button class="filter-btn" onclick="filterPosts('question',this)">Questions</button>
+        <button class="filter-btn" onclick="filterPosts('tip',this)">Tips</button>
+        <button class="filter-btn" onclick="filterPosts('resource',this)">Resources</button>
+      </div>
+      <div id="postsList" data-aos="fade-up"><p style="color:var(--muted)">Loading...</p></div>
+    </div>
+  </div>
+  <div class="modal" id="newPostModal">
+    <div class="modal-card">
+      <h2>Create New Post</h2>
+      <div class="form-group"><label>Title</label><input type="text" id="postTitle"></div>
+      <div class="form-group"><label>Type</label><select id="postType"><option value="question">Question</option><option value="tip">Tip</option><option value="resource">Resource</option></select></div>
+      <div class="form-group"><label>Content</label><textarea id="postContent"></textarea></div>
+      <button class="btn" onclick="submitPost()">Publish</button>
+      <button class="btn" style="background:transparent;border:1px solid var(--border);margin-left:.5rem;box-shadow:none" onclick="closeNewPost()">Cancel</button>
+    </div>
+  </div>
+  <div class="modal" id="viewModal">
+    <div class="modal-card" id="viewContent"></div>
+  </div>
+  <script src="supabase.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({duration:700,once:true,offset:80});
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+    let currentUser=null,allPosts=[],allUsers={},currentFilter='all';
+    async function onDbReady(){
+      currentUser=await requireAuth();if(!currentUser)return;
+      const profile=await getUserProfile(currentUser.id);
+      document.getElementById('sidebarAv').textContent=getInitials(profile?.first_name,profile?.last_name);
+      document.getElementById('sidebarName').textContent=`${profile?.first_name||''} ${profile?.last_name||''}`.trim();
+      const students=await getLeaderboard(200);students.forEach(s=>allUsers[s.id]=s);
+      loadPosts();
+    }
+    async function loadPosts(){
+      try{
+        const {data}=await window.db.from('discussions').select('*').order('created_at',{ascending:false});
+        allPosts=data||[];renderPosts();
+      }catch(e){document.getElementById('postsList').innerHTML='<p style="color:var(--muted)">Could not load posts</p>';}
+    }
+    function filterPosts(f,btn){currentFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPosts();}
+    function renderPosts(){
+      const filtered=currentFilter==='all'?allPosts:allPosts.filter(p=>p.type===currentFilter);
+      document.getElementById('postsList').innerHTML=filtered.length?filtered.map(p=>{
+        const author=allUsers[p.user_id];const name=author?`${author.first_name||''} ${author.last_name||''}`.trim():'Anonymous';
+        return `<div class="post-card" onclick="viewPost('${p.id}')"><div class="post-header"><div class="post-av">${author?getInitials(author.first_name,author.last_name):'?'}</div><div><div class="post-author">${name}</div><div class="post-time">${formatDate(p.created_at)}</div></div><span class="type-badge">${p.type||'question'}</span></div><div class="post-title">${p.title}</div><div class="post-preview">${p.content}</div><div class="post-meta"><span>💬 replies</span><span>❤️ ${p.upvotes||0}</span></div></div>`;
+      }).join(''):'<p style="color:var(--muted)">No posts yet. Be the first!</p>';
+    }
+    function openNewPost(){document.getElementById('newPostModal').classList.add('show');}
+    function closeNewPost(){document.getElementById('newPostModal').classList.remove('show');}
+    async function submitPost(){
+      const title=document.getElementById('postTitle').value.trim();
+      const content=document.getElementById('postContent').value.trim();
+      const type=document.getElementById('postType').value;
+      if(!title||!content){alert('Fill all fields');return;}
+      try{
+        await window.db.from('discussions').insert({user_id:currentUser.id,title,content,type});
+        closeNewPost();loadPosts();
+      }catch(e){alert('Failed: '+e.message);}
+    }
+    async function viewPost(id){
+      const post=allPosts.find(p=>p.id===id);if(!post)return;
+      const author=allUsers[post.user_id];const name=author?`${author.first_name||''} ${author.last_name||''}`.trim():'Anonymous';
+      const {data:replies}=await window.db.from('discussion_replies').select('*').eq('discussion_id',id).order('created_at');
+      document.getElementById('viewContent').innerHTML=`
+        <h2>${post.title}</h2><p style="color:var(--muted);margin-bottom:1rem">by ${name} · ${formatDate(post.created_at)}</p>
+        <p style="line-height:1.8;margin-bottom:1rem">${post.content}</p>
+        <div>${(replies||[]).map(r=>{const a=allUsers[r.user_id];return `<div class="reply-item"><strong>${a?a.first_name:'User'}</strong>: ${r.content}</div>`;}).join('')||'<p style="color:var(--muted)">No replies yet</p>'}</div>
+        <div class="reply-box"><textarea id="replyText" style="width:100%;padding:.75rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:Syne,sans-serif;min-height:80px"></textarea>
+        <button class="btn" style="margin-top:.75rem" onclick="submitReply('${id}')">Reply</button>
+        <button class="btn" style="background:transparent;border:1px solid var(--border);margin-left:.5rem;box-shadow:none" onclick="document.getElementById('viewModal').classList.remove('show')">Close</button></div>`;
+      document.getElementById('viewModal').classList.add('show');
+    }
+    async function submitReply(discussionId){
+      const content=document.getElementById('replyText').value.trim();if(!content)return;
+      try{await window.db.from('discussion_replies').insert({discussion_id:discussionId,user_id:currentUser.id,content});viewPost(discussionId);}catch(e){alert(e.message);}
+    }
+  </script>
+</body>
+</html>

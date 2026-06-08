@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VidX — Your College. Your Batch. Real Competition.</title>
+  <meta name="description" content="VidX — The coding platform built for your college batch. Daily challenges, XP, leaderboard, and real competition.">
+
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+    :root {
+      --bg:        #03040a;
+      --bg2:       #080c14;
+      --bg3:       #0d1220;
+      --bg4:       #111827;
+      --neon-blue:    #3b82f6;
+      --neon-purple:  #8b5cf6;
+      --neon-cyan:    #06b6d4;
+      --neon-pink:    #ec4899;
+      --neon-green:   #10b981;
+      --glow-blue:   rgba(59,130,246,0.35);
+      --glow-purple: rgba(139,92,246,0.35);
+      --glow-cyan:   rgba(6,182,212,0.35);
+      --text:  #f1f5f9;
+      --muted: #64748b;
+      --dim:   #334155;
+      --border:      rgba(255,255,255,0.06);
+      --border-glow: rgba(139,92,246,0.3);
+      --primary:      #8b5cf6;
+      --primary-dark: #7c3aed;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--neon-purple); border-radius: 2px; }
+
+    /* Orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+      animation: orbFloat 8s ease-in-out infinite;
+    }
+    .orb-1 { width: 400px; height: 400px; background: #8b5cf6; top: -100px; left: -100px; animation-delay: 0s; }
+    .orb-2 { width: 300px; height: 300px; background: #3b82f6; bottom: -100px; right: -100px; animation-delay: 3s; }
+    .orb-3 { width: 200px; height: 200px; background: #06b6d4; top: 50%; left: 50%; animation-delay: 6s; }
+
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50%      { transform: translate(30px, -30px) scale(1.1); }
+    }
+
+    /* Navbar */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(3, 4, 10, 0.6);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    .navbar.scrolled {
+      border-bottom-color: var(--border-glow);
+      background: rgba(3, 4, 10, 0.85);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 800;
+      font-size: 1.4rem;
+    }
+
+    .nav-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 800;
+      box-shadow: 0 0 20px var(--glow-purple);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.4rem;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--border-glow);
+      box-shadow: 0 0 20px var(--glow-purple);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+      color: #fff;
+      box-shadow: 0 4px 20px var(--glow-purple);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 30px var(--glow-purple);
+    }
+
+    .btn-primary.pulse {
+      animation: btnPulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes btnPulse {
+      0%, 100% { box-shadow: 0 4px 20px var(--glow-purple); }
+      50%      { box-shadow: 0 4px 40px rgba(139, 92, 246, 0.6); }
+    }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: var(--text);
+      border-radius: 2px;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 70px;
+      left: 0;
+      right: 0;
+      background: rgba(8, 12, 20, 0.97);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-glow);
+      padding: 1.5rem 2rem;
+      z-index: 99;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .mobile-menu.open { display: flex; }
+
+    .mobile-menu a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mobile-menu .nav-actions {
+      flex-direction: column;
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    .mobile-menu .btn { width: 100%; justify-content: center; }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .hero-spline {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .hero-spline spline-viewer {
+      width: 100%;
+      height: 100%;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(3,4,10,0.4) 0%, rgba(3,4,10,0.85) 70%);
+      z-index: 1;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 8rem 2rem 4rem;
+      max-width: 900px;
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: rgba(236, 72, 153, 0.1);
+      border: 1px solid rgba(236, 72, 153, 0.3);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--neon-pink);
+      margin-bottom: 2rem;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--neon-pink);
+      border-radius: 50%;
+      animation: livePulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .hero-title {
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #fff 0%, var(--neon-purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-typed-wrap {
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 1.5rem;
+      min-height: 1.2em;
+    }
+
+    .hero-typed-wrap .typed-cursor {
+      color: var(--neon-cyan);
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--muted);
+      margin-bottom: 2.5rem;
+      font-weight: 600;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-lg {
+      padding: 0.85rem 2rem;
+      font-size: 1rem;
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--border-glow);
+      border-bottom: 1px solid var(--border-glow);
+      background: rgba(8, 12, 20, 0.8);
+      backdrop-filter: blur(10px);
+    }
+
+    .stat-item {
+      padding: 2rem 1.5rem;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+
+    .stat-item:last-child { border-right: none; }
+
+    .stat-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    /* Sections */
+    section { position: relative; z-index: 2; }
+
+    .section-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 5rem 2rem;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+
+    .section-tag {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--neon-cyan);
+      margin-bottom: 0.75rem;
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, var(--neon-purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Features */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      backdrop-filter: blur(10px);
+    }
+
+    .feature-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px var(--glow-purple);
+    }
+
+    .feature-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(59,130,246,0.2));
+      border: 1px solid var(--border-glow);
+    }
+
+    .feature-card h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-card p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    /* Leaderboard Preview */
+    .leaderboard-section {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .leaderboard-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .rank-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+
+    .rank-card:hover {
+      border-color: var(--border-glow);
+      transform: translateX(4px);
+    }
+
+    .rank-card.rank-1 { border-color: rgba(251, 191, 36, 0.4); box-shadow: 0 0 15px rgba(251, 191, 36, 0.15); }
+    .rank-card.rank-2 { border-color: rgba(148, 163, 184, 0.4); }
+    .rank-card.rank-3 { border-color: rgba(180, 83, 9, 0.4); }
+
+    .rank-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 1.1rem;
+      width: 36px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .rank-card.rank-1 .rank-num { color: #fbbf24; }
+    .rank-card.rank-2 .rank-num { color: #94a3b8; }
+    .rank-card.rank-3 .rank-num { color: #b45309; }
+
+    .rank-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .rank-info { flex: 1; min-width: 0; }
+
+    .rank-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rank-meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .rank-xp-bar-wrap {
+      width: 120px;
+      flex-shrink: 0;
+    }
+
+    .rank-xp {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      text-align: right;
+      margin-bottom: 0.3rem;
+    }
+
+    .xp-bar {
+      height: 4px;
+      background: var(--bg);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .xp-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan));
+      border-radius: 2px;
+      transition: width 1s ease;
+    }
+
+    .loading-text {
+      text-align: center;
+      color: var(--muted);
+      padding: 2rem;
+      font-weight: 600;
+    }
+
+    /* CTA */
+    .cta-section {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-mesh {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(139,92,246,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 50%, rgba(59,130,246,0.15) 0%, transparent 50%);
+      z-index: 0;
+    }
+
+    .cta-inner {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 5rem 2rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .cta-inner h2 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff 0%, var(--neon-purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cta-inner p {
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin-bottom: 2rem;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* Footer */
+    footer {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    footer span {
+      background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 800;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .stat-item:nth-child(2) { border-right: none; }
+      .stat-item:nth-child(1),
+      .stat-item:nth-child(2) { border-bottom: 1px solid var(--border); }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links, .nav-actions { display: none; }
+      .hamburger { display: flex; }
+      .rank-xp-bar-wrap { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-bar { grid-template-columns: 1fr; }
+      .stat-item { border-right: none !important; border-bottom: 1px solid var(--border); }
+      .stat-item:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">VX</div>
+      VidX
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#leaderboard">Leaderboard</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost">Login</a>
+      <a href="register.html" class="btn btn-primary">Get Started →</a>
+    </div>
+
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#home" onclick="closeMobileMenu()">Home</a>
+    <a href="#features" onclick="closeMobileMenu()">Features</a>
+    <a href="#leaderboard" onclick="closeMobileMenu()">Leaderboard</a>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost">Login</a>
+      <a href="register.html" class="btn btn-primary">Get Started →</a>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <section class="hero" id="home">
+    <div class="hero-spline">
+      <script type="module" src="https://unpkg.com/@splinetool/viewer@1.0.87/build/spline-viewer.js"></script>
+      <spline-viewer url="https://prod.spline.design/jRlcFGUGNLh1xhGE/scene.splinecode"></spline-viewer>
+    </div>
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+      <div class="live-badge">
+        <span class="live-dot"></span>
+        Live — Your College is Competing
+      </div>
+
+      <h1 class="hero-title">The Coding Platform<br>Built for Your</h1>
+      <div class="hero-typed-wrap">
+        <span id="typed"></span>
+      </div>
+
+      <p class="hero-sub">Solve. Compete. Rank Up.</p>
+
+      <div class="hero-ctas">
+        <a href="register.html" class="btn btn-primary btn-lg pulse">Get Started Free →</a>
+        <a href="#features" class="btn btn-ghost btn-lg">Watch Demo</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat-item" data-aos="fade-up">
+      <span class="stat-number mono" data-count="500" data-suffix="+">0</span>
+      <span class="stat-label">Students</span>
+    </div>
+    <div class="stat-item" data-aos="fade-up" data-aos-delay="100">
+      <span class="stat-number mono" data-count="100" data-suffix="+">0</span>
+      <span class="stat-label">Problems</span>
+    </div>
+    <div class="stat-item" data-aos="fade-up" data-aos-delay="200">
+      <span class="stat-number mono" data-count="365">0</span>
+      <span class="stat-label">Daily Challenges</span>
+    </div>
+    <div class="stat-item" data-aos="fade-up" data-aos-delay="300">
+      <span class="stat-number mono" data-count="100" data-suffix="%">0</span>
+      <span class="stat-label">Real Rankings</span>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <section id="features">
+    <div class="section-wrap">
+      <div class="section-header" data-aos="fade-up">
+        <span class="section-tag">Platform</span>
+        <h2 class="section-title">How VidX Works</h2>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card" data-aos="fade-up">
+          <div class="feature-icon">⚡</div>
+          <h3>Daily Problems</h3>
+          <p>New challenge every midnight. Solve before it expires and earn XP before your batchmates do.</p>
+        </div>
+
+        <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+          <div class="feature-icon">🏆</div>
+          <h3>College Leaderboard</h3>
+          <p>Compete with YOUR batch, not random strangers. Real rankings from your college community.</p>
+        </div>
+
+        <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+          <div class="feature-icon">🔥</div>
+          <h3>Streak System</h3>
+          <p>Build your daily coding habit. Your batchmates notice when you disappear — stay in the game.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Leaderboard Preview -->
+  <section class="leaderboard-section" id="leaderboard">
+    <div class="section-wrap">
+      <div class="section-header" data-aos="fade-up">
+        <span class="section-tag">Rankings</span>
+        <h2 class="section-title">See Who's Leading</h2>
+      </div>
+
+      <div class="leaderboard-grid" id="leaderboardPreview">
+        <p class="loading-text">Loading leaderboard...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="cta-mesh"></div>
+    <div class="cta-inner" data-aos="fade-up">
+      <h2>Ready to Dominate Your Batch?</h2>
+      <p>Join VidX today and start climbing the leaderboard. Your college is waiting.</p>
+      <div class="cta-buttons">
+        <a href="register.html" class="btn btn-primary btn-lg pulse">Create Account</a>
+        <a href="login.html" class="btn btn-ghost btn-lg">View Demo</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <span>VidX</span> © 2025 | Made for college coders
+  </footer>
+
+  <!-- Scripts -->
+  <script src="supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+  <script>
+    // Typed.js
+    document.addEventListener('DOMContentLoaded', () => {
+      new Typed('#typed', {
+        strings: ['College Batch', 'Daily Grind', 'Real Rankings', 'Code Battles'],
+        typeSpeed: 60,
+        backSpeed: 40,
+        loop: true
+      });
+
+      AOS.init({ duration: 700, once: true, offset: 80 });
+    });
+
+    // Navbar scroll effect
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // Mobile menu
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.toggle('open');
+    });
+
+    function closeMobileMenu() {
+      document.getElementById('mobileMenu').classList.remove('open');
+    }
+
+    // Count-up animation
+    function animateCountUp(el) {
+      const target = parseInt(el.dataset.count, 10);
+      const suffix = el.dataset.suffix || '';
+      const duration = 2000;
+      const start = performance.now();
+
+      function update(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.floor(eased * target);
+        el.textContent = current + suffix;
+        if (progress < 1) requestAnimationFrame(update);
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    const statsObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('[data-count]').forEach(animateCountUp);
+          statsObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+
+    statsObserver.observe(document.querySelector('.stats-bar'));
+
+    // Leaderboard preview from Supabase
+    async function onDbReady() {
+      await loadLeaderboardPreview();
+      await updateDynamicStats();
+    }
+
+    async function loadLeaderboardPreview() {
+      const container = document.getElementById('leaderboardPreview');
+
+      try {
+        const students = await getLeaderboard(5);
+
+        if (!students.length) {
+          container.innerHTML = '<p class="loading-text">No rankings yet — be the first to solve a problem!</p>';
+          return;
+        }
+
+        const maxXP = students[0].xp || 1;
+
+        container.innerHTML = students.map((s, i) => {
+          const rank = i + 1;
+          const name = `${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email || 'Anonymous';
+          const initials = getInitials(s.first_name, s.last_name);
+          const pct = Math.round(((s.xp || 0) / maxXP) * 100);
+
+          return `
+            <div class="rank-card rank-${rank <= 3 ? rank : ''}" data-aos="fade-up" data-aos-delay="${i * 80}">
+              <span class="rank-num mono">#${rank}</span>
+              <div class="rank-avatar">${initials}</div>
+              <div class="rank-info">
+                <div class="rank-name">${name}</div>
+                <div class="rank-meta">${s.rank_title || 'Newbie'} · ${s.college || 'VidX'}</div>
+              </div>
+              <div class="rank-xp-bar-wrap">
+                <div class="rank-xp mono">${(s.xp || 0).toLocaleString()} XP</div>
+                <div class="xp-bar"><div class="xp-bar-fill" style="width:${pct}%"></div></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        AOS.refresh();
+      } catch (e) {
+        container.innerHTML = '<p class="loading-text">Could not load leaderboard. Check your connection.</p>';
+      }
+    }
+
+    async function updateDynamicStats() {
+      try {
+        const students = await getLeaderboard(1000);
+        const problems = await getAllProblems();
+
+        const studentEl = document.querySelector('[data-count="500"]');
+        const problemEl = document.querySelector('[data-count="100"]');
+
+        if (students.length > 0 && studentEl) {
+          studentEl.dataset.count = Math.max(students.length, 500);
+        }
+        if (problems.length > 0 && problemEl) {
+          problemEl.dataset.count = Math.max(problems.length, 100);
+        }
+      } catch (e) {
+        console.error('updateDynamicStats:', e);
+      }
+    }
+  </script>
+</body>
+</html>

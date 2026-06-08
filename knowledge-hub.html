@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Hub — VidX</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-purple:#8b5cf6;--neon-blue:#3b82f6;--neon-cyan:#06b6d4;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);--sidebar-w:260px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--neon-purple);border-radius:2px}
+    .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.12;pointer-events:none;z-index:0}.orb-1{width:350px;height:350px;background:#3b82f6;top:10%;left:-80px}
+    .layout{display:flex;min-height:100vh;position:relative;z-index:1}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto}
+    .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
+    .nav-section{padding:1rem 0}.nav-label{padding:0 1.5rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;border-left:3px solid transparent;transition:all .2s}
+    .nav-item:hover{color:var(--text);background:rgba(139,92,246,.05)}.nav-item.active{color:var(--text);border-left-color:var(--neon-purple);background:rgba(139,92,246,.08)}
+    .sidebar-user{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
+    .user-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+    .main{margin-left:var(--sidebar-w);flex:1;padding:2rem}
+    .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border)}
+    .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
+    .page-title{font-size:1.8rem;font-weight:800;margin-bottom:1.5rem}
+    .focus-card{background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(59,130,246,.15));border:1px solid var(--border-glow);border-radius:16px;padding:1.5rem;margin-bottom:2rem;box-shadow:0 0 25px var(--glow-purple)}
+    .focus-card h3{font-size:1.1rem;font-weight:800;margin-bottom:.5rem}.focus-card p{color:var(--muted)}
+    .filters{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+    .filter-btn{padding:.5rem 1rem;background:var(--bg2);border:1px solid var(--border);border-radius:100px;color:var(--muted);font-family:'Syne',sans-serif;font-weight:600;font-size:.85rem;cursor:pointer}
+    .filter-btn.active{background:rgba(139,92,246,.15);border-color:var(--neon-purple);color:var(--text)}
+    .resources-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:2rem}
+    .resource-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.25rem;transition:all .3s}
+    .resource-card:hover{border-color:var(--border-glow);transform:translateY(-2px);box-shadow:0 0 20px var(--glow-purple)}
+    .resource-type{display:inline-block;padding:.2rem .6rem;border-radius:100px;font-size:.7rem;font-weight:700;margin-bottom:.75rem;background:rgba(6,182,212,.15);color:var(--neon-cyan)}
+    .resource-title{font-weight:800;margin-bottom:.5rem}
+    .resource-diff{font-size:.8rem;color:var(--muted);margin-bottom:1rem}
+    .resource-link{color:var(--neon-purple);font-weight:700;text-decoration:none;font-size:.9rem}
+    .tip-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;border-left:4px solid var(--neon-cyan)}
+    .tip-card h3{font-size:1rem;font-weight:800;margin-bottom:.75rem;color:var(--neon-cyan)}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999}.overlay.show{display:block}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:1rem}.mobile-topbar{display:flex}}
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
+      <div class="nav-section"><div class="nav-label">Main</div>
+        <a href="dashboard.html" class="nav-item">🏠 Dashboard</a><a href="problems.html" class="nav-item">📚 Problem Library</a><a href="problem.html" class="nav-item">⚡ Daily Problem</a>
+        <a href="leaderboard.html" class="nav-item">🏆 Leaderboard</a><a href="sadhana.html" class="nav-item">🧘 Sadhana Mode</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Community</div>
+        <a href="battles.html" class="nav-item">👥 Battles</a><a href="knowledge-hub.html" class="nav-item active">🎓 Knowledge Hub</a>
+        <a href="discussions.html" class="nav-item">💬 Discussions</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Account</div>
+        <a href="profile.html" class="nav-item">👤 My Profile</a><a href="certificate.html" class="nav-item">📜 Certificates</a>
+        <a href="#" class="nav-item" onclick="logout();return false">🚪 Log Out</a>
+      </div>
+      <div class="sidebar-user"><div class="user-av" id="sidebarAv">?</div><div><div style="font-weight:700" id="sidebarName">—</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="mobile-topbar"><button class="hamburger" onclick="toggleSidebar()">☰</button><strong>Knowledge Hub</strong></div>
+      <h1 class="page-title" data-aos="fade-up">🎓 Knowledge Hub</h1>
+      <div class="focus-card" data-aos="fade-up" id="focusCard"><h3>This Week's Focus</h3><p>Loading top voted topic...</p></div>
+      <div class="filters" data-aos="fade-up">
+        <button class="filter-btn active" onclick="filterRes('All',this)">All</button>
+        <button class="filter-btn" onclick="filterRes('Arrays',this)">Arrays</button>
+        <button class="filter-btn" onclick="filterRes('DP',this)">DP</button>
+        <button class="filter-btn" onclick="filterRes('Graphs',this)">Graphs</button>
+        <button class="filter-btn" onclick="filterRes('Trees',this)">Trees</button>
+        <button class="filter-btn" onclick="filterRes('Strings',this)">Strings</button>
+      </div>
+      <div class="resources-grid" id="resourcesGrid" data-aos="fade-up"></div>
+      <div class="tip-card" data-aos="fade-up"><h3>💡 Tip of the Day</h3><p id="tipText">Loading...</p></div>
+    </div>
+  </div>
+  <script src="supabase.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({duration:700,once:true,offset:80});
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+    const RESOURCES=[
+      {title:'Array Masterclass',type:'📹 Video',topic:'Arrays',diff:'Beginner',url:'https://leetcode.com/explore/learn/card/array/'},
+      {title:'Two Pointer Technique',type:'📄 Article',topic:'Arrays',diff:'Intermediate',url:'https://leetcode.com/articles/two-pointer-technique/'},
+      {title:'DP Patterns Sheet',type:'📋 Sheet',topic:'DP',diff:'Advanced',url:'https://leetcode.com/discuss/general-discussion/458695/dynamic-programming-patterns'},
+      {title:'Graph BFS/DFS Guide',type:'📄 Article',topic:'Graphs',diff:'Intermediate',url:'https://leetcode.com/explore/learn/card/graph/'},
+      {title:'Binary Tree Traversals',type:'📹 Video',topic:'Trees',diff:'Beginner',url:'https://leetcode.com/explore/learn/card/introduction-to-data-structure-binary-tree/'},
+      {title:'String Algorithms',type:'📋 Sheet',topic:'Strings',diff:'Intermediate',url:'https://leetcode.com/tag/string/'},
+      {title:'Sliding Window Pattern',type:'📄 Article',topic:'Arrays',diff:'Intermediate',url:'https://leetcode.com/discuss/general-discussion/657507/sliding-window-algorithm-template'},
+      {title:'Tree DP Explained',type:'📹 Video',topic:'Trees',diff:'Advanced',url:'https://leetcode.com/discuss/general-discussion/1000929/tree-dp'},
+      {title:'Graph Shortest Path',type:'📄 Article',topic:'Graphs',diff:'Advanced',url:'https://leetcode.com/explore/learn/card/graph/620/single-source-shortest-path/'},
+      {title:'Kadane Algorithm',type:'📋 Sheet',topic:'DP',diff:'Beginner',url:'https://leetcode.com/problems/maximum-subarray/'}
+    ];
+    const TIPS=['Always analyze time complexity before coding.','Draw examples on paper first.','Start with brute force, then optimize.','Read constraints carefully — they hint at the approach.','Test edge cases: empty input, single element, max values.','Use meaningful variable names even in contests.'];
+    let currentTopic='All';
+    async function onDbReady(){
+      const user=await requireAuth();if(!user)return;
+      const profile=await getUserProfile(user.id);
+      document.getElementById('sidebarAv').textContent=getInitials(profile?.first_name,profile?.last_name);
+      document.getElementById('sidebarName').textContent=`${profile?.first_name||''} ${profile?.last_name||''}`.trim();
+      const counts=await getVoteCounts();
+      const topTopic=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+      document.getElementById('focusCard').innerHTML=`<h3>This Week's Focus: ${topTopic?topTopic[0]:'Arrays'}</h3><p>Based on community votes — ${topTopic?topTopic[1]+' students voted for this topic':'default focus topic'}. Dive into resources below!</p>`;
+      document.getElementById('tipText').textContent=TIPS[new Date().getDate()%TIPS.length];
+      renderResources();
+    }
+    function filterRes(t,btn){currentTopic=t;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderResources();}
+    function renderResources(){
+      const filtered=currentTopic==='All'?RESOURCES:RESOURCES.filter(r=>r.topic===currentTopic);
+      document.getElementById('resourcesGrid').innerHTML=filtered.map(r=>`
+        <div class="resource-card"><span class="resource-type">${r.type}</span><div class="resource-title">${r.title}</div><div class="resource-diff">${r.topic} · ${r.diff}</div><a href="${r.url}" target="_blank" class="resource-link">Open Resource →</a></div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

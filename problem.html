@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Problem — VidX</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-blue:#3b82f6;--neon-purple:#8b5cf6;--neon-cyan:#06b6d4;--neon-pink:#ec4899;--neon-green:#10b981;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+    .mono{font-family:'JetBrains Mono',monospace}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--neon-purple);border-radius:2px}
+    .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.1;pointer-events:none;z-index:0}.orb-1{width:300px;height:300px;background:#8b5cf6;top:-50px;left:-50px}
+    .layout{display:flex;height:100vh;position:relative;z-index:1}
+    .panel-left,.panel-right{flex:1;display:flex;flex-direction:column;overflow:hidden}
+    .panel-left{border-right:1px solid var(--border)}
+    .panel-header{padding:1rem 1.5rem;border-bottom:1px solid var(--border);background:var(--bg2)}
+    .header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem}
+    .back-link{color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem}
+    .action-btns{display:flex;gap:.5rem}
+    .icon-btn{padding:.4rem .7rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.85rem;color:var(--text);font-family:'Syne',sans-serif;font-weight:600}
+    .icon-btn.active{border-color:var(--neon-purple);background:rgba(139,92,246,.15)}
+    .stats-row{display:flex;gap:1rem;font-size:.8rem;color:var(--muted);flex-wrap:wrap;margin-bottom:.75rem}
+    .stats-row span strong{color:var(--neon-cyan)}
+    .tabs{display:flex;gap:.4rem;flex-wrap:wrap}
+    .tab{padding:.4rem .8rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Syne',sans-serif;font-weight:600;font-size:.75rem;cursor:pointer}
+    .tab.active{background:rgba(139,92,246,.15);border-color:var(--neon-purple);color:var(--text)}
+    .panel-body{flex:1;overflow-y:auto;padding:1.5rem}
+    .tag{display:inline-block;padding:.2rem .6rem;border-radius:100px;font-size:.75rem;font-weight:700;margin-right:.4rem}
+    .tag-easy{background:rgba(16,185,129,.15);color:var(--neon-green)}.tag-med{background:rgba(245,158,11,.15);color:#f59e0b}.tag-hard{background:rgba(236,72,153,.15);color:var(--neon-pink)}
+    .tag-topic{background:rgba(139,92,246,.15);color:var(--neon-purple)}
+    .prob-title{font-size:1.4rem;font-weight:800;margin:.75rem 0}
+    .prob-desc{color:var(--muted);line-height:1.8;margin-bottom:1.5rem;white-space:pre-wrap}
+    .example-box{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1rem}
+    .example-box h4{font-size:.85rem;color:var(--neon-cyan);margin-bottom:.5rem}
+    .example-box pre{font-family:'JetBrains Mono',monospace;font-size:.85rem}
+    .section-block{margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)}
+    .section-block h3{font-size:1rem;font-weight:800;margin-bottom:.75rem;color:var(--neon-cyan)}
+    .related-card{display:block;padding:.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:.5rem;text-decoration:none;color:var(--text);transition:border-color .2s}
+    .related-card:hover{border-color:var(--border-glow)}
+    .editor-toolbar{padding:.75rem 1rem;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+    .lang-select{padding:.4rem .8rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Syne',sans-serif;font-weight:600;font-size:.85rem}
+    .btn-run,.btn-submit{padding:.5rem 1.2rem;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer}
+    .btn-run{background:var(--bg3);border:1px solid var(--border);color:var(--text)}
+    .btn-submit{background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;box-shadow:0 0 15px var(--glow-purple)}
+    .btn-answer{padding:.5rem 1rem;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);border-radius:8px;color:var(--neon-cyan);font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer}
+    .paste-check{font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:.4rem}
+    .btn-run:disabled,.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+    .code-area{flex:1;display:flex;flex-direction:column}
+    #codeEditor{flex:1;width:100%;padding:1rem;background:var(--bg3);border:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.9rem;line-height:1.6;resize:none;outline:none;tab-size:2}
+    .output-panel{height:180px;border-top:1px solid var(--border);background:var(--bg2);padding:1rem;overflow-y:auto}
+    .output-label{font-size:.75rem;color:var(--muted);font-weight:700;margin-bottom:.5rem;text-transform:uppercase}
+    .output-meta{font-size:.75rem;color:var(--muted);margin-bottom:.5rem}
+    .output-text{font-family:'JetBrains Mono',monospace;font-size:.85rem;white-space:pre-wrap;color:var(--neon-cyan)}
+    .output-text.error{color:var(--neon-pink)}.output-text.success{color:var(--neon-green)}
+    .overlay-result{display:none;position:fixed;inset:0;background:rgba(3,4,10,.92);z-index:999;align-items:center;justify-content:center;padding:1rem}
+    .overlay-result.show{display:flex}
+    .result-card{text-align:center;padding:2.5rem;background:var(--bg2);border:1px solid var(--border-glow);border-radius:20px;box-shadow:0 0 40px var(--glow-purple);max-width:440px;width:100%}
+    .result-card h2{font-size:1.8rem;margin:1rem 0}
+    .result-xp{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;color:var(--neon-green)}
+    .result-actions{display:flex;gap:1rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap}
+    .btn{padding:.65rem 1.4rem;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;text-decoration:none;border:none;cursor:pointer}
+    .btn-primary{background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+    @media(max-width:768px){.layout{flex-direction:column}.panel-left,.panel-right{height:50vh}}
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="layout">
+    <div class="panel-left">
+      <div class="panel-header">
+        <div class="header-row">
+          <a href="problems.html" class="back-link">← Problem Library</a>
+          <div class="action-btns">
+            <button class="icon-btn" id="bookmarkBtn" onclick="toggleBookmarkBtn()">🔖 Save</button>
+            <button class="icon-btn" id="likeBtn" onclick="toggleLikeBtn()">❤️ Like</button>
+          </div>
+        </div>
+        <div class="stats-row" id="statsRow">Loading stats...</div>
+        <div class="tabs" id="tabBar">
+          <button class="tab active" data-tab="problem">📄 Problem</button>
+          <button class="tab" data-tab="hint">💡 Hint</button>
+          <button class="tab" data-tab="editorial">📖 Editorial</button>
+          <button class="tab" data-tab="discussion">💬 Discussion</button>
+          <button class="tab" data-tab="related">🔗 Related</button>
+        </div>
+      </div>
+      <div class="panel-body" id="leftContent"><p style="color:var(--muted)">Loading...</p></div>
+    </div>
+    <div class="panel-right">
+      <div class="editor-toolbar">
+        <select class="lang-select" id="langSelect" onchange="loadTemplate()">
+          <option value="python">Python</option>
+          <option value="java">Java</option>
+          <option value="cpp">C++</option>
+          <option value="javascript">JavaScript</option>
+        </select>
+        <button class="btn-run" id="runBtn" onclick="runCode()">▶ Run</button>
+        <button class="btn-submit" id="submitBtn" onclick="submitCode()">Submit →</button>
+        <button class="btn-answer" onclick="submitAnswerOnly()">Answer Only (+1 XP)</button>
+        <label class="paste-check"><input type="checkbox" id="pasteMode"> Pasted solution (no bonus)</label>
+      </div>
+      <div class="code-area">
+        <textarea id="codeEditor" spellcheck="false"></textarea>
+        <div class="output-panel">
+          <div class="output-label">Output</div>
+          <div class="output-meta mono" id="outputMeta"></div>
+          <div class="output-text" id="output">Ready to run...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="overlay-result" id="resultOverlay">
+    <div class="result-card">
+      <div style="font-size:3rem" id="resultEmoji">🎉</div>
+      <h2 id="resultTitle">Accepted!</h2>
+      <div class="result-xp" id="resultXP">+50 XP</div>
+      <p id="resultDetail" style="color:var(--muted);margin-top:.5rem"></p>
+      <div class="result-actions">
+        <a href="dashboard.html" class="btn btn-primary">Dashboard</a>
+        <a href="leaderboard.html" class="btn btn-ghost">Leaderboard</a>
+        <a href="problems.html" class="btn btn-ghost">More Problems</a>
+      </div>
+    </div>
+  </div>
+  <script src="supabase.js"></script>
+  <script>
+    const TEMPLATES={
+      python:'# Write your solution here\ndef solve():\n    pass\n\nif __name__ == "__main__":\n    pass\n',
+      java:'public class Main {\n    public static void main(String[] args) {\n        // Write your solution here\n    }\n}',
+      cpp:'#include <iostream>\nusing namespace std;\n\nint main() {\n    return 0;\n}',
+      javascript:'const fs=require("fs");\nconst input=fs.readFileSync(0,"utf8").trim();\n'
+    };
+    let currentUser=null,problem=null,stats=null,related=[],bookmarked=false,liked=false,startTime=Date.now(),activeTab='problem';
+
+    async function onDbReady(){
+      currentUser=await requireAuth();if(!currentUser)return;
+      const params=new URLSearchParams(window.location.search);
+      const id=params.get('id');
+      problem=id?await getProblemById(id):await getDailyProblem();
+      if(!problem){document.getElementById('leftContent').innerHTML='<p style="color:var(--neon-pink)">No problem found.</p>';return;}
+      document.title=problem.title+' — VidX';
+      [_allCache,stats,related]=await Promise.all([getAllProblems(),getProblemStats(problem.id),getRelatedProblems(problem)]);
+      const [bm,lk]=await Promise.all([getBookmarkedProblems(currentUser.id),getLikedProblems(currentUser.id)]);
+      bookmarked=bm.includes(problem.id);liked=lk.includes(problem.id);
+      updateActionBtns();
+      renderStats();
+      showTab('problem');
+      loadTemplate();
+      document.querySelectorAll('#tabBar .tab').forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
+    }
+
+    function updateActionBtns(){
+      document.getElementById('bookmarkBtn').classList.toggle('active',bookmarked);
+      document.getElementById('bookmarkBtn').textContent=bookmarked?'🔖 Saved':'🔖 Save';
+      document.getElementById('likeBtn').classList.toggle('active',liked);
+    }
+
+    async function toggleBookmarkBtn(){bookmarked=await toggleBookmark(currentUser.id,problem.id);updateActionBtns();}
+    async function toggleLikeBtn(){liked=await toggleLike(currentUser.id,problem.id);updateActionBtns();}
+
+    function renderStats(){
+      document.getElementById('statsRow').innerHTML=`
+        <span>Success: <strong>${stats.successRate}%</strong></span>
+        <span>Attempts: <strong>${stats.totalAttempts}</strong></span>
+        <span>Accepted: <strong>${stats.totalAccepted}</strong></span>
+        <span>XP: <strong>${problem.xp_reward||50}</strong></span>`;
+    }
+
+    function showTab(tab){
+      activeTab=tab;
+      document.querySelectorAll('#tabBar .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+      const el=document.getElementById('leftContent');
+      const diff=problem.difficulty||'Beginner';
+      const dc=diff==='Advanced'?'tag-hard':diff==='Intermediate'?'tag-med':'tag-easy';
+      const companies=(problem.companies||[]).map(c=>`<span class="tag tag-topic">${c}</span>`).join('');
+
+      if(tab==='problem'){
+        el.innerHTML=`<div><span class="tag ${dc}">${diff}</span><span class="tag tag-topic">${problem.topic||'General'}</span>${companies}</div>
+          <h1 class="prob-title">${problem.title}</h1><div class="prob-desc">${problem.description||''}</div>
+          ${problem.sample_input?`<div class="example-box"><h4>Sample Input</h4><pre>${problem.sample_input}</pre></div>`:''}
+          ${problem.sample_output?`<div class="example-box"><h4>Sample Output</h4><pre>${problem.sample_output}</pre></div>`:''}`;
+      }else if(tab==='hint'){
+        el.innerHTML=`<h3 style="font-weight:800;margin-bottom:1rem">💡 Hint</h3><p style="color:var(--muted);line-height:1.8">${problem.hint||'Break the problem into smaller parts. Consider edge cases first. Try brute force, then optimize.'}</p>`;
+      }else if(tab==='editorial'){
+        el.innerHTML=`<h3 style="font-weight:800;margin-bottom:1rem">📖 Editorial</h3><p style="color:var(--muted);line-height:1.8;white-space:pre-wrap">${problem.editorial||'Editorial coming soon. Focus on understanding the '+(problem.topic||'topic')+' approach step by step.'}</p>`;
+      }else if(tab==='discussion'){
+        el.innerHTML=`<h3 style="font-weight:800;margin-bottom:1rem">💬 Discussion</h3><p style="color:var(--muted)">Share approaches with batchmates on the <a href="discussions.html" style="color:var(--neon-purple)">Discussions page</a>.</p>`;
+      }else if(tab==='related'){
+        const sameCo=allProblemsCache().filter(p=>p.id!==problem.id&&(p.companies||[]).some(c=>(problem.companies||[]).includes(c)));
+        el.innerHTML=`<div class="section-block" style="border:none;padding:0"><h3>🔗 Related Problems</h3>
+          ${related.length?related.map(p=>`<a href="problem.html?id=${p.id}" class="related-card">${p.title} <span style="color:var(--muted);font-size:.8rem">· ${p.topic}</span></a>`).join(''):'<p style="color:var(--muted)">No related problems yet.</p>'}
+          ${(problem.companies||[]).length?`<h3 style="margin-top:1.5rem">🏢 Similar Company Questions</h3>
+          ${sameCo.slice(0,5).map(p=>`<a href="problem.html?id=${p.id}" class="related-card">${p.title}</a>`).join('')||'<p style="color:var(--muted)">None found.</p>'}`:''}</div>`;
+      }
+    }
+
+    let _allCache=[];
+    function allProblemsCache(){return _allCache;}
+
+    function loadTemplate(){document.getElementById('codeEditor').value=TEMPLATES[document.getElementById('langSelect').value];}
+
+    function getTestCases(){
+      let tc=[];try{tc=typeof problem.test_cases==='string'?JSON.parse(problem.test_cases):(problem.test_cases||[]);}catch(e){}
+      if(!tc.length&&problem.sample_input)tc=[{input:problem.sample_input,expected:problem.sample_output}];
+      return tc;
+    }
+
+    async function runCode(){
+      const btn=document.getElementById('runBtn'),out=document.getElementById('output'),meta=document.getElementById('outputMeta');
+      btn.disabled=true;out.textContent='Running...';out.className='output-text';meta.textContent='';
+      try{
+        const code=document.getElementById('codeEditor').value;
+        const lang=document.getElementById('langSelect').value;
+        const result=await executePistonCode(lang,code,problem.sample_input||'');
+        if(result.tle||result.error){out.textContent=result.error||'Time Limit Exceeded';out.className='output-text error';}
+        else if(result.code!==0&&result.code!==undefined){out.textContent=result.stderr||result.stdout||'Runtime Error';out.className='output-text error';}
+        else{out.textContent=result.stdout||'(no output)';if(result.stderr)out.textContent+='\n'+result.stderr;out.className='output-text';}
+        meta.textContent=`Runtime: ${result.runtimeMs||0}ms · Memory: ${result.memoryKb||0}KB`;
+      }catch(e){out.textContent='Error: '+e.message;out.className='output-text error';}
+      btn.disabled=false;
+    }
+
+    async function submitCode(){
+      const btn=document.getElementById('submitBtn'),out=document.getElementById('output'),meta=document.getElementById('outputMeta');
+      btn.disabled=true;out.textContent='Judging...';out.className='output-text';
+      const code=document.getElementById('codeEditor').value;
+      const lang=document.getElementById('langSelect').value;
+      const pasteMode=document.getElementById('pasteMode').checked;
+      const testCases=getTestCases();
+      const judge=await judgeSubmission(lang,code,testCases,8000);
+      const timeTaken=Math.max(1,Math.round((Date.now()-startTime)/60000));
+      const submissionMode=pasteMode?'paste':'code';
+      const res=await submitSolution(currentUser.id,problem.id,{
+        verdict:judge.verdict,language:lang,timeTaken,code,
+        passedCases:judge.passed,totalCases:judge.total,
+        runtimeMs:judge.runtimeMs,submissionMode
+      });
+
+      if(judge.verdict==='Accepted'){
+        showResult('🎉','Accepted!',res);
+        out.textContent=`✅ All ${judge.total} test cases passed!`;out.className='output-text success';
+      }else{
+        let msg=judge.verdict;
+        if(judge.failedCase){const fc=judge.failedCase;
+          if(fc.expected)msg+=`\nTest #${fc.index}\nExpected: ${fc.expected}\nGot: ${fc.actual||'(empty)'}`;
+          else if(fc.stderr)msg+=`\n${fc.stderr}`;
+        }
+        msg+=`\n\n+${res.xpGained||3} XP · ${judge.passed}/${judge.total} passed`;
+        out.textContent=msg;out.className='output-text error';
+      }
+      meta.textContent=`Verdict: ${judge.verdict} · Runtime: ${judge.runtimeMs||0}ms · ${judge.passed}/${judge.total} passed`;
+      btn.disabled=false;
+    }
+
+    async function submitAnswerOnly(){
+      if(!confirm('Submit answer only? You will earn only +1 XP.'))return;
+      const res=await submitSolution(currentUser.id,problem.id,{verdict:'Answer Only',language:'none',timeTaken:0,submissionMode:'answer'});
+      showResult('📝','Answer Recorded',res);
+    }
+
+    function showResult(emoji,title,res){
+      document.getElementById('resultEmoji').textContent=emoji;
+      document.getElementById('resultTitle').textContent=title;
+      document.getElementById('resultXP').textContent='+'+(res.xpGained||0)+' XP';
+      let detail=res.verdict||'';
+      if(res.position)detail+=` · Solver #${res.position}`;
+      if(res.streakBonus)detail+=` · Streak bonus +${res.streakBonus}`;
+      document.getElementById('resultDetail').textContent=detail;
+      document.getElementById('resultOverlay').classList.add('show');
+    }
+  </script>
+</body>
+</html>

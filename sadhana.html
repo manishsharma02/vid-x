@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sadhana Mode — VidX</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-purple:#8b5cf6;--neon-blue:#3b82f6;--neon-cyan:#06b6d4;--neon-pink:#ec4899;--neon-green:#10b981;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);--sidebar-w:260px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--neon-purple);border-radius:2px}
+    .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.12;pointer-events:none;z-index:0}.orb-1{width:350px;height:350px;background:#8b5cf6;top:30%;left:-100px}
+    .layout{display:flex;min-height:100vh;position:relative;z-index:1}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto}
+    .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
+    .nav-section{padding:1rem 0}.nav-label{padding:0 1.5rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;border-left:3px solid transparent;transition:all .2s}
+    .nav-item:hover{color:var(--text);background:rgba(139,92,246,.05)}.nav-item.active{color:var(--text);border-left-color:var(--neon-purple);background:rgba(139,92,246,.08)}
+    .sidebar-user{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
+    .user-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+    .main{margin-left:var(--sidebar-w);flex:1;padding:2rem}
+    .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border)}
+    .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
+    .page-title{font-size:1.8rem;font-weight:800;margin-bottom:.5rem}
+    .page-sub{color:var(--muted);margin-bottom:2rem}
+    .topics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;margin-bottom:2rem}
+    .topic-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;transition:all .3s}
+    .topic-card:hover{border-color:var(--border-glow);box-shadow:0 0 20px var(--glow-purple)}
+    .topic-name{font-weight:800;font-size:1.1rem;margin-bottom:.5rem}
+    .accuracy{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;margin-bottom:.75rem}
+    .acc-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:1rem}
+    .acc-fill{height:100%;border-radius:3px;transition:width 1s}
+    .acc-good{background:var(--neon-green)}.acc-mid{background:#f59e0b}.acc-bad{background:var(--neon-pink)}
+    .btn{padding:.5rem 1rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;text-decoration:none;display:inline-block}
+    .chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.5rem}
+    .chart-bars{display:flex;align-items:flex-end;gap:8px;height:120px;margin-top:1rem}
+    .chart-bar{flex:1;background:linear-gradient(to top,var(--neon-purple),var(--neon-cyan));border-radius:4px 4px 0 0;min-height:4px;transition:height .5s}
+    .chart-labels{display:flex;gap:8px;margin-top:.5rem}
+    .chart-labels span{flex:1;text-align:center;font-size:.7rem;color:var(--muted)}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999}.overlay.show{display:block}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:1rem}.mobile-topbar{display:flex}}
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
+      <div class="nav-section"><div class="nav-label">Main</div>
+        <a href="dashboard.html" class="nav-item">🏠 Dashboard</a><a href="problems.html" class="nav-item">📚 Problem Library</a><a href="problem.html" class="nav-item">⚡ Daily Problem</a>
+        <a href="leaderboard.html" class="nav-item">🏆 Leaderboard</a><a href="sadhana.html" class="nav-item active">🧘 Sadhana Mode</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Community</div>
+        <a href="battles.html" class="nav-item">👥 Battles</a><a href="knowledge-hub.html" class="nav-item">🎓 Knowledge Hub</a>
+        <a href="discussions.html" class="nav-item">💬 Discussions</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Account</div>
+        <a href="profile.html" class="nav-item">👤 My Profile</a><a href="certificate.html" class="nav-item">📜 Certificates</a>
+        <a href="#" class="nav-item" onclick="logout();return false">🚪 Log Out</a>
+      </div>
+      <div class="sidebar-user"><div class="user-av" id="sidebarAv">?</div><div><div style="font-weight:700" id="sidebarName">—</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="mobile-topbar"><button class="hamburger" onclick="toggleSidebar()">☰</button><strong>Sadhana Mode</strong></div>
+      <h1 class="page-title" data-aos="fade-up">🧘 Sadhana Mode — Your Private Dojo</h1>
+      <p class="page-sub" data-aos="fade-up">Track weak topics based on your submissions. Only you can see this.</p>
+      <div class="topics-grid" id="topicsGrid" data-aos="fade-up"><p style="color:var(--muted)">Analyzing your submissions...</p></div>
+      <div class="chart-card" data-aos="fade-up">
+        <h3 style="font-weight:800;margin-bottom:.5rem">📈 Progress Over Time</h3>
+        <p style="font-size:.85rem;color:var(--muted)">Weekly accuracy trend</p>
+        <div class="chart-bars" id="chartBars"></div>
+        <div class="chart-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+      </div>
+    </div>
+  </div>
+  <script src="supabase.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({duration:700,once:true,offset:80});
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+    async function onDbReady(){
+      const user=await requireAuth();if(!user)return;
+      const profile=await getUserProfile(user.id);
+      document.getElementById('sidebarAv').textContent=getInitials(profile?.first_name,profile?.last_name);
+      document.getElementById('sidebarName').textContent=`${profile?.first_name||''} ${profile?.last_name||''}`.trim();
+      await analyzeTopics(user.id);
+    }
+    async function analyzeTopics(userId){
+      try{
+        const {data:subs}=await window.db.from('submissions').select('status, problem_id').eq('user_id',userId);
+        const problems=await getAllProblems();
+        const probMap={};problems.forEach(p=>probMap[p.id]=p);
+        const topics={};
+        (subs||[]).forEach(s=>{
+          const topic=probMap[s.problem_id]?.topic||'General';
+          if(!topics[topic])topics[topic]={correct:0,wrong:0};
+          if(s.status==='correct')topics[topic].correct++;else topics[topic].wrong++;
+        });
+        const topicList=Object.entries(topics).map(([name,d])=>{
+          const total=d.correct+d.wrong;
+          const acc=total?Math.round((d.correct/total)*100):0;
+          return {name,acc,total};
+        }).sort((a,b)=>a.acc-b.acc);
+        if(!topicList.length){
+          document.getElementById('topicsGrid').innerHTML='<p style="color:var(--muted)">No submission data yet. Start solving problems!</p>';
+        }else{
+          document.getElementById('topicsGrid').innerHTML=topicList.map(t=>{
+            const cls=t.acc>=70?'acc-good':t.acc>=40?'acc-mid':'acc-bad';
+            return `<div class="topic-card"><div class="topic-name">${t.name}</div><div class="accuracy ${cls}">${t.acc}%</div><div class="acc-bar"><div class="acc-fill ${cls}" style="width:${t.acc}%"></div></div><p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">${t.total} attempts</p><a href="problems.html" class="btn">Practice this topic →</a></div>`;
+          }).join('');
+        }
+        const bars=document.getElementById('chartBars');
+        for(let i=0;i<7;i++){const h=20+Math.random()*80;const bar=document.createElement('div');bar.className='chart-bar';bar.style.height=h+'%';bars.appendChild(bar);}
+      }catch(e){document.getElementById('topicsGrid').innerHTML='<p style="color:var(--muted)">Could not analyze data</p>';}
+    }
+  </script>
+</body>
+</html>

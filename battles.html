@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Battles — VidX</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-blue:#3b82f6;--neon-purple:#8b5cf6;--neon-cyan:#06b6d4;--neon-pink:#ec4899;--neon-green:#10b981;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);--sidebar-w:260px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    .mono{font-family:'JetBrains Mono',monospace}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--neon-purple);border-radius:2px}
+    .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.12;pointer-events:none;z-index:0}.orb-1{width:350px;height:350px;background:#ec4899;top:20%;right:-80px}
+    .layout{display:flex;min-height:100vh;position:relative;z-index:1}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto}
+    .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
+    .nav-section{padding:1rem 0}.nav-label{padding:0 1.5rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;border-left:3px solid transparent;transition:all .2s}
+    .nav-item:hover{color:var(--text);background:rgba(139,92,246,.05)}.nav-item.active{color:var(--text);border-left-color:var(--neon-purple);background:rgba(139,92,246,.08)}
+    .sidebar-user{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
+    .user-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+    .main{margin-left:var(--sidebar-w);flex:1;padding:2rem}
+    .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border)}
+    .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
+    .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem}
+    .page-title{font-size:1.8rem;font-weight:800}
+    .battle-stats{display:flex;gap:1rem}
+    .stat-pill{padding:.5rem 1rem;background:var(--bg2);border:1px solid var(--border);border-radius:100px;font-size:.85rem;font-weight:600}
+    .stat-pill span{color:var(--neon-green)}
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;transition:all .3s}
+    .card:hover{border-color:var(--border-glow)}
+    .card-title{font-size:1.1rem;font-weight:800;margin-bottom:1rem}
+    .search-row{display:flex;gap:.75rem;margin-bottom:1rem}
+    .search-input{flex:1;padding:.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif}
+    .search-input:focus{outline:none;border-color:var(--neon-purple);box-shadow:0 0 0 3px rgba(139,92,246,.2)}
+    .btn{padding:.65rem 1.4rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;box-shadow:0 4px 15px var(--glow-purple)}
+    .battle-item{display:flex;align-items:center;justify-content:space-between;padding:1rem;background:var(--bg3);border:1px solid var(--border);border-radius:12px;margin-bottom:.75rem;flex-wrap:wrap;gap:.75rem}
+    .battle-status{padding:.25rem .7rem;border-radius:100px;font-size:.75rem;font-weight:700}
+    .status-pending{background:rgba(245,158,11,.15);color:#f59e0b}.status-ongoing{background:rgba(59,130,246,.15);color:var(--neon-blue)}.status-completed{background:rgba(16,185,129,.15);color:var(--neon-green)}
+    .search-results{max-height:200px;overflow-y:auto}
+    .search-result{padding:.75rem;cursor:pointer;border-radius:8px;display:flex;align-items:center;gap:.75rem}
+    .search-result:hover{background:var(--bg3)}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999}.overlay.show{display:block}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:1rem}.mobile-topbar{display:flex}}
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a href="dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
+      <div class="nav-section"><div class="nav-label">Main</div>
+        <a href="dashboard.html" class="nav-item">🏠 Dashboard</a><a href="problems.html" class="nav-item">📚 Problem Library</a><a href="problem.html" class="nav-item">⚡ Daily Problem</a>
+        <a href="leaderboard.html" class="nav-item">🏆 Leaderboard</a><a href="sadhana.html" class="nav-item">🧘 Sadhana Mode</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Community</div>
+        <a href="battles.html" class="nav-item active">👥 Battles</a><a href="knowledge-hub.html" class="nav-item">🎓 Knowledge Hub</a>
+        <a href="discussions.html" class="nav-item">💬 Discussions</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Account</div>
+        <a href="profile.html" class="nav-item">👤 My Profile</a><a href="certificate.html" class="nav-item">📜 Certificates</a>
+        <a href="#" class="nav-item" onclick="logout();return false">🚪 Log Out</a>
+      </div>
+      <div class="sidebar-user"><div class="user-av" id="sidebarAv">?</div><div><div style="font-weight:700" id="sidebarName">—</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="mobile-topbar"><button class="hamburger" onclick="toggleSidebar()">☰</button><strong>Battles</strong></div>
+      <div class="page-header" data-aos="fade-up">
+        <h1 class="page-title">⚔️ Code Battles</h1>
+        <div class="battle-stats">
+          <div class="stat-pill">Won: <span id="battlesWon">0</span></div>
+          <div class="stat-pill">Lost: <span id="battlesLost" style="color:var(--neon-pink)">0</span></div>
+        </div>
+      </div>
+      <div class="card" data-aos="fade-up">
+        <div class="card-title">Find Opponent</div>
+        <div class="search-row">
+          <input type="text" class="search-input" id="searchInput" placeholder="Search student by name..." oninput="searchStudents()">
+          <button class="btn" onclick="searchStudents()">Search</button>
+        </div>
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="card" data-aos="fade-up"><div class="card-title">Active Battles</div><div id="activeBattles"><p style="color:var(--muted)">Loading...</p></div></div>
+      <div class="card" data-aos="fade-up"><div class="card-title">Recent History</div><div id="battleHistory"><p style="color:var(--muted)">Loading...</p></div></div>
+      <div class="card" data-aos="fade-up"><div class="card-title">🏆 Most Battles Won</div><div id="battleLeaderboard"><p style="color:var(--muted)">Loading...</p></div></div>
+    </div>
+  </div>
+  <script src="supabase.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({duration:700,once:true,offset:80});
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+    let currentUser=null,profile=null,allStudents=[];
+    async function onDbReady(){
+      currentUser=await requireAuth();if(!currentUser)return;
+      profile=await getUserProfile(currentUser.id);
+      document.getElementById('sidebarAv').textContent=getInitials(profile?.first_name,profile?.last_name);
+      document.getElementById('sidebarName').textContent=`${profile?.first_name||''} ${profile?.last_name||''}`.trim();
+      allStudents=await getLeaderboard(200);
+      loadBattles();
+    }
+    function searchStudents(){
+      const q=document.getElementById('searchInput').value.toLowerCase().trim();
+      const results=allStudents.filter(s=>{
+        const name=`${s.first_name||''} ${s.last_name||''}`.toLowerCase();
+        return s.id!==currentUser.id&&(name.includes(q)||(s.email||'').toLowerCase().includes(q));
+      }).slice(0,8);
+      document.getElementById('searchResults').innerHTML=results.length?results.map(s=>{
+        const name=`${s.first_name||''} ${s.last_name||''}`.trim()||s.email;
+        return `<div class="search-result" onclick="challengeStudent('${s.id}','${name.replace(/'/g,"\\'")}')"><div class="user-av" style="width:32px;height:32px;font-size:.7rem">${getInitials(s.first_name,s.last_name)}</div><span>${name}</span><span style="margin-left:auto;color:var(--neon-cyan);font-size:.8rem" class="mono">${(s.xp||0).toLocaleString()} XP</span></div>`;
+      }).join(''):'<p style="color:var(--muted);padding:.75rem">No students found</p>';
+    }
+    async function challengeStudent(opponentId,name){
+      const problem=await getDailyProblem();if(!problem){alert('No problem available for battle.');return;}
+      try{
+        const {error}=await window.db.from('battles').insert({challenger_id:currentUser.id,opponent_id:opponentId,problem_id:problem.id,status:'pending'});
+        if(error)throw error;
+        alert(`Challenge sent to ${name}!`);
+        loadBattles();
+      }catch(e){alert('Failed to send challenge: '+e.message);}
+    }
+    async function loadBattles(){
+      try{
+        const {data:battles}=await window.db.from('battles').select('*').or(`challenger_id.eq.${currentUser.id},opponent_id.eq.${currentUser.id}`).order('created_at',{ascending:false});
+        const list=battles||[];
+        let won=0,lost=0;
+        list.forEach(b=>{if(b.status==='completed'){if(b.winner_id===currentUser.id)won++;else if(b.winner_id)lost++;}});
+        document.getElementById('battlesWon').textContent=won;
+        document.getElementById('battlesLost').textContent=lost;
+        const active=list.filter(b=>b.status==='pending'||b.status==='ongoing');
+        document.getElementById('activeBattles').innerHTML=active.length?active.map(b=>renderBattle(b)).join(''):'<p style="color:var(--muted)">No active battles</p>';
+        document.getElementById('battleHistory').innerHTML=list.filter(b=>b.status==='completed').slice(0,10).map(b=>renderBattle(b)).join('')||'<p style="color:var(--muted)">No battle history yet</p>';
+        const winCounts={};
+        list.filter(b=>b.status==='completed'&&b.winner_id).forEach(b=>{winCounts[b.winner_id]=(winCounts[b.winner_id]||0)+1;});
+        const top=Object.entries(winCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+        document.getElementById('battleLeaderboard').innerHTML=top.length?top.map(([id,c],i)=>{
+          const s=allStudents.find(u=>u.id===id);const name=s?`${s.first_name||''} ${s.last_name||''}`.trim():'Unknown';
+          return `<div class="battle-item"><span class="mono">#${i+1}</span><span>${name}</span><span style="color:var(--neon-green);font-weight:700">${c} wins</span></div>`;
+        }).join(''):'<p style="color:var(--muted)">No winners yet</p>';
+      }catch(e){console.error(e);}
+    }
+    function renderBattle(b){
+      const isChallenger=b.challenger_id===currentUser.id;
+      const otherId=isChallenger?b.opponent_id:b.challenger_id;
+      const other=allStudents.find(s=>s.id===otherId);
+      const name=other?`${other.first_name||''} ${other.last_name||''}`.trim():'Unknown';
+      const statusClass=b.status==='pending'?'status-pending':b.status==='ongoing'?'status-ongoing':'status-completed';
+      let result='';
+      if(b.status==='completed'){result=b.winner_id===currentUser.id?'🏆 You won!':'💀 You lost';}
+      const action=b.status==='pending'&&!isChallenger?`<button class="btn" style="padding:.4rem .8rem;font-size:.8rem" onclick="acceptBattle('${b.id}')">Accept</button>`:'';
+      return `<div class="battle-item"><div><strong>${isChallenger?'vs':'from'} ${name}</strong><div style="font-size:.8rem;color:var(--muted)">${formatDate(b.created_at)} ${result}</div></div><span class="battle-status ${statusClass}">${b.status}</span>${action}</div>`;
+    }
+    async function acceptBattle(id){
+      try{await window.db.from('battles').update({status:'ongoing'}).eq('id',id);
+        const {data}=await window.db.from('battles').select('problem_id').eq('id',id).single();
+        if(data?.problem_id)window.location.href=`problem.html?id=${data.problem_id}`;
+      }catch(e){alert(e.message);}
+    }
+  </script>
+</body>
+</html>
