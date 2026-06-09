@@ -7,6 +7,7 @@
   <meta name="description" content="VidX — The coding platform built for your college batch. Daily challenges, XP, leaderboard, and real competition.">
 
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+<link rel="stylesheet" href="animations.css">
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
@@ -710,7 +711,7 @@
     </div>
     <div class="hero-overlay"></div>
 
-    <div class="hero-content">
+    <div class="hero-content vidx-hero-float vidx-reveal-left">
       <div class="live-badge">
         <span class="live-dot"></span>
         Live — Your College is Competing
@@ -816,18 +817,23 @@
   <script src="supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="animations.js"></script>
 
   <script>
     // Typed.js
     document.addEventListener('DOMContentLoaded', () => {
+      if (typeof AOS !== 'undefined' && !window._vidxAosInit) {
+        AOS.init({ duration: 700, once: true, offset: 80 });
+        window._vidxAosInit = true;
+      }
       new Typed('#typed', {
         strings: ['College Batch', 'Daily Grind', 'Real Rankings', 'Code Battles'],
         typeSpeed: 60,
         backSpeed: 40,
         loop: true
       });
-
-      AOS.init({ duration: 700, once: true, offset: 80 });
     });
 
     // Navbar scroll effect
@@ -914,11 +920,28 @@
           `;
         }).join('');
 
-        AOS.refresh();
+        // AOS hide na kare — attributes hata do
+        container.querySelectorAll('[data-aos]').forEach(el => {
+          el.removeAttribute('data-aos');
+          el.removeAttribute('data-aos-delay');
+          el.style.opacity = '1';
+          el.style.transform = 'none';
+        });
+        if (typeof AOS !== 'undefined') AOS.refresh();
+        if (window.VidXAnimations) VidXAnimations.refresh();
       } catch (e) {
         container.innerHTML = '<p class="loading-text">Could not load leaderboard. Check your connection.</p>';
       }
     }
+
+    // Direct fallback — window load ke baad bhi try karo
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (typeof getLeaderboard === 'function') {
+          loadLeaderboardPreview();
+        }
+      }, 500);
+    });
 
     async function updateDynamicStats() {
       try {

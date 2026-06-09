@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manage Problems — VidX Admin</title>
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <link rel="stylesheet" href="animations.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
     :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-red:#ef4444;--neon-purple:#8b5cf6;--neon-blue:#3b82f6;--neon-cyan:#06b6d4;--neon-green:#10b981;--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--sidebar-w:260px;}
@@ -71,10 +72,13 @@
         <form id="problemForm">
           <div class="form-grid">
             <div class="form-group full"><label>Title</label><input type="text" id="title" required></div>
-            <div class="form-group"><label>Difficulty</label><select id="difficulty"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
+            <div class="form-group"><label>Difficulty</label><select id="difficulty"><option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option></select></div>
             <div class="form-group"><label>Topic</label><select id="topic"><option>Arrays</option><option>DP</option><option>Graphs</option><option>Trees</option><option>Strings</option><option>Math</option></select></div>
             <div class="form-group"><label>XP Reward</label><input type="number" id="xpReward" value="50"></div>
             <div class="form-group full"><label>Description</label><textarea id="description" required></textarea></div>
+            <div class="form-group full"><label>Constraints</label><textarea id="constraints" rows="3" placeholder="e.g. 1 ≤ n ≤ 10^5"></textarea></div>
+            <div class="form-group full"><label>Hint</label><textarea id="hint" rows="3" placeholder="Optional hint for students"></textarea></div>
+            <div class="form-group full"><label>Editorial</label><textarea id="editorial" rows="4" placeholder="Full solution explanation (shown in Editorial tab)"></textarea></div>
             <div class="form-group full"><label>Tagged Companies</label>
               <div class="checkbox-group">
                 <label><input type="checkbox" value="Google"> Google</label>
@@ -87,6 +91,7 @@
             <div class="form-group"><label>Sample Input</label><textarea id="sampleInput" rows="3"></textarea></div>
             <div class="form-group"><label>Sample Output</label><textarea id="sampleOutput" rows="3"></textarea></div>
             <div class="form-group full"><label>Test Cases (JSON)</label><textarea id="testCases" rows="4" placeholder='[{"input":"5","expected":"25"}]'></textarea></div>
+            <div class="form-group full"><label>Hidden Test Cases (JSON)</label><textarea id="hiddenTestCases" rows="4" placeholder='[{"input":"100","expected":"10000"}]'></textarea></div>
             <div class="form-group full toggle-row">
               <label><input type="checkbox" id="isDaily"> Set as Daily Problem</label>
               <input type="date" id="dailyDate">
@@ -104,8 +109,10 @@
   </div>
   <script src="supabase.js"></script>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="animations.js"></script>
   <script>
-    AOS.init({duration:700,once:true,offset:80});
     function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
     function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
     let allProblems=[];
@@ -126,8 +133,9 @@
     document.getElementById('problemForm').addEventListener('submit',async(e)=>{
       e.preventDefault();
       const companies=[...document.querySelectorAll('.checkbox-group input:checked')].map(c=>c.value);
-      let testCases=[];
+      let testCases=[], hiddenTestCases=[];
       try{testCases=JSON.parse(document.getElementById('testCases').value||'[]');}catch(err){alert('Invalid test cases JSON');return;}
+      try{hiddenTestCases=JSON.parse(document.getElementById('hiddenTestCases').value||'[]');}catch(err){alert('Invalid hidden test cases JSON');return;}
       const isDaily=document.getElementById('isDaily').checked;
       const data={
         title:document.getElementById('title').value.trim(),
@@ -135,16 +143,26 @@
         topic:document.getElementById('topic').value,
         xp_reward:parseInt(document.getElementById('xpReward').value)||50,
         description:document.getElementById('description').value.trim(),
-        companies,sample_input:document.getElementById('sampleInput').value,
+        constraints:document.getElementById('constraints').value.trim()||null,
+        hint:document.getElementById('hint').value.trim()||null,
+        editorial:document.getElementById('editorial').value.trim()||null,
+        companies,
+        sample_input:document.getElementById('sampleInput').value,
         sample_output:document.getElementById('sampleOutput').value,
-        test_cases:testCases,is_daily:isDaily,
+        test_cases:testCases,
+        hidden_test_cases:hiddenTestCases,
+        is_daily:isDaily,
         daily_date:isDaily?document.getElementById('dailyDate').value||new Date().toISOString().split('T')[0]:null
       };
       try{
-        const {error}=await window.db.from('problems').insert(data);
-        if(error)throw error;
+        await insertProblem(data);
         alert('Problem added!');document.getElementById('problemForm').reset();loadProblems();
-      }catch(err){alert('Error: '+err.message);}
+      }catch(err){
+        const msg=err.message||String(err);
+        if(msg.includes('test_cases')||msg.includes('schema cache')||msg.includes('row-level security')||msg.includes('constraints')){
+          alert('Database schema needs update. Run schema-upgrade.sql in Supabase SQL Editor, then try again.\n\n'+msg);
+        }else{alert('Error: '+msg);}
+      }
     });
     async function deleteProblem(id){
       if(!confirm('Delete this problem?'))return;

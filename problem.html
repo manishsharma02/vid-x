@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Problem — VidX</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <link rel="stylesheet" href="animations.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
     :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-blue:#3b82f6;--neon-purple:#8b5cf6;--neon-cyan:#06b6d4;--neon-pink:#ec4899;--neon-green:#10b981;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);}
@@ -126,6 +128,10 @@
     </div>
   </div>
   <script src="supabase.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="animations.js"></script>
   <script>
     const TEMPLATES={
       python:'# Write your solution here\ndef solve():\n    pass\n\nif __name__ == "__main__":\n    pass\n',
@@ -133,7 +139,7 @@
       cpp:'#include <iostream>\nusing namespace std;\n\nint main() {\n    return 0;\n}',
       javascript:'const fs=require("fs");\nconst input=fs.readFileSync(0,"utf8").trim();\n'
     };
-    let currentUser=null,problem=null,stats=null,related=[],bookmarked=false,liked=false,startTime=Date.now(),activeTab='problem';
+    let currentUser=null,problem=null,stats=null,related=[],bookmarked=false,liked=false,startTime=Date.now(),activeTab='problem',_submitStartTime=0;
 
     async function onDbReady(){
       currentUser=await requireAuth();if(!currentUser)return;
@@ -174,12 +180,13 @@
       document.querySelectorAll('#tabBar .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
       const el=document.getElementById('leftContent');
       const diff=problem.difficulty||'Beginner';
-      const dc=diff==='Advanced'?'tag-hard':diff==='Intermediate'?'tag-med':'tag-easy';
+      const dc=diff==='Hard'?'tag-hard':diff==='Medium'?'tag-med':'tag-easy';
       const companies=(problem.companies||[]).map(c=>`<span class="tag tag-topic">${c}</span>`).join('');
 
       if(tab==='problem'){
         el.innerHTML=`<div><span class="tag ${dc}">${diff}</span><span class="tag tag-topic">${problem.topic||'General'}</span>${companies}</div>
           <h1 class="prob-title">${problem.title}</h1><div class="prob-desc">${problem.description||''}</div>
+          ${problem.constraints?`<div class="example-box"><h4>Constraints</h4><pre>${problem.constraints}</pre></div>`:''}
           ${problem.sample_input?`<div class="example-box"><h4>Sample Input</h4><pre>${problem.sample_input}</pre></div>`:''}
           ${problem.sample_output?`<div class="example-box"><h4>Sample Output</h4><pre>${problem.sample_output}</pre></div>`:''}`;
       }else if(tab==='hint'){
@@ -203,7 +210,12 @@
     function loadTemplate(){document.getElementById('codeEditor').value=TEMPLATES[document.getElementById('langSelect').value];}
 
     function getTestCases(){
-      let tc=[];try{tc=typeof problem.test_cases==='string'?JSON.parse(problem.test_cases):(problem.test_cases||[]);}catch(e){}
+      let visible=[], hidden=[];
+      try{
+        visible=typeof problem.test_cases==='string'?JSON.parse(problem.test_cases):(problem.test_cases||[]);
+        hidden=typeof problem.hidden_test_cases==='string'?JSON.parse(problem.hidden_test_cases):(problem.hidden_test_cases||[]);
+      }catch(e){console.warn('[VidX] test case parse error:',e);}
+      let tc=[...visible,...hidden];
       if(!tc.length&&problem.sample_input)tc=[{input:problem.sample_input,expected:problem.sample_output}];
       return tc;
     }
@@ -214,45 +226,85 @@
       try{
         const code=document.getElementById('codeEditor').value;
         const lang=document.getElementById('langSelect').value;
-        const result=await executePistonCode(lang,code,problem.sample_input||'');
-        if(result.tle||result.error){out.textContent=result.error||'Time Limit Exceeded';out.className='output-text error';}
-        else if(result.code!==0&&result.code!==undefined){out.textContent=result.stderr||result.stdout||'Runtime Error';out.className='output-text error';}
-        else{out.textContent=result.stdout||'(no output)';if(result.stderr)out.textContent+='\n'+result.stderr;out.className='output-text';}
+        console.log('[VidX Run] executing', lang, 'chars:', code.length);
+        const result=await executeCode(lang,code,problem.sample_input||'');
+        console.log('[VidX Run] result:', result);
+        if(result.tle||result.error){
+          out.textContent=result.error||formatExecutionOutput(result)||'Time Limit Exceeded';
+          out.className='output-text error';
+        }else if(result.code!==0&&result.code!==undefined){
+          out.textContent=formatExecutionOutput(result)||'Runtime Error';
+          out.className='output-text error';
+        }else{
+          out.textContent=formatExecutionOutput(result);
+          out.className='output-text';
+        }
         meta.textContent=`Runtime: ${result.runtimeMs||0}ms · Memory: ${result.memoryKb||0}KB`;
-      }catch(e){out.textContent='Error: '+e.message;out.className='output-text error';}
+      }catch(e){
+        console.error('[VidX Run] error:', e);
+        out.textContent='Error: '+e.message;
+        out.className='output-text error';
+      }
       btn.disabled=false;
     }
 
     async function submitCode(){
       const btn=document.getElementById('submitBtn'),out=document.getElementById('output'),meta=document.getElementById('outputMeta');
-      btn.disabled=true;out.textContent='Judging...';out.className='output-text';
-      const code=document.getElementById('codeEditor').value;
-      const lang=document.getElementById('langSelect').value;
-      const pasteMode=document.getElementById('pasteMode').checked;
-      const testCases=getTestCases();
-      const judge=await judgeSubmission(lang,code,testCases,8000);
-      const timeTaken=Math.max(1,Math.round((Date.now()-startTime)/60000));
-      const submissionMode=pasteMode?'paste':'code';
-      const res=await submitSolution(currentUser.id,problem.id,{
-        verdict:judge.verdict,language:lang,timeTaken,code,
-        passedCases:judge.passed,totalCases:judge.total,
-        runtimeMs:judge.runtimeMs,submissionMode
-      });
+      btn.disabled=true;
+      out.textContent='Judging...';
+      out.className='output-text';
+      meta.textContent='';
+      const submitStartTime=Date.now();
 
-      if(judge.verdict==='Accepted'){
-        showResult('🎉','Accepted!',res);
-        out.textContent=`✅ All ${judge.total} test cases passed!`;out.className='output-text success';
-      }else{
-        let msg=judge.verdict;
-        if(judge.failedCase){const fc=judge.failedCase;
-          if(fc.expected)msg+=`\nTest #${fc.index}\nExpected: ${fc.expected}\nGot: ${fc.actual||'(empty)'}`;
-          else if(fc.stderr)msg+=`\n${fc.stderr}`;
+      try {
+        const code=document.getElementById('codeEditor').value;
+        const lang=document.getElementById('langSelect').value;
+        const pasteMode=document.getElementById('pasteMode').checked;
+        const testCases=getTestCases();
+
+        const judge=await judgeSubmission(lang,code,testCases,8000,(cur,total)=>{
+          out.textContent=`Judging test case ${cur} of ${total}...`;
+        });
+
+        const timeTaken=Math.max(1,Math.round((Date.now()-submitStartTime)/60000));
+        const submissionMode=pasteMode?'paste':'code';
+        const res=await submitSolution(currentUser.id,problem.id,{
+          verdict:judge.verdict,language:lang,timeTaken,code,
+          passedCases:judge.passed,totalCases:judge.total,
+          runtimeMs:judge.runtimeMs,submissionMode
+        });
+
+        if(res.error){
+          out.textContent='Submission saved with errors: '+res.error;
+          out.className='output-text error';
+          meta.textContent='Verdict: '+judge.verdict;
+          return;
         }
-        msg+=`\n\n+${res.xpGained||3} XP · ${judge.passed}/${judge.total} passed`;
-        out.textContent=msg;out.className='output-text error';
+
+        if(judge.verdict==='Accepted'){
+          showResult('🎉','Accepted!',res);
+          out.textContent=`✅ All ${judge.total} test cases passed!`;
+          out.className='output-text success';
+        }else{
+          let msg=judge.verdict;
+          if(judge.failedCase){
+            const fc=judge.failedCase;
+            if(fc.expected)msg+=`\nTest #${fc.index}\nExpected: ${fc.expected}\nGot: ${fc.actual||'(empty)'}`;
+            else if(fc.stderr)msg+=`\n${fc.stderr}`;
+            else if(fc.error)msg+=`\n${fc.error}`;
+          }
+          msg+=`\n\n+${res.xpGained||3} XP · ${judge.passed}/${judge.total} passed`;
+          out.textContent=msg;
+          out.className='output-text error';
+        }
+        meta.textContent=`Verdict: ${judge.verdict} · Runtime: ${judge.runtimeMs||0}ms · ${judge.passed}/${judge.total} passed`;
+      } catch(e) {
+        console.error('[VidX Submit] error:', e);
+        out.textContent='Submission failed: '+(e.message||'Unknown error');
+        out.className='output-text error';
+      } finally {
+        btn.disabled=false;
       }
-      meta.textContent=`Verdict: ${judge.verdict} · Runtime: ${judge.runtimeMs||0}ms · ${judge.passed}/${judge.total} passed`;
-      btn.disabled=false;
     }
 
     async function submitAnswerOnly(){

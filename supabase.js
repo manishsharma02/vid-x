@@ -162,6 +162,68 @@ async function getProblemById(id) {
   }
 }
 
+function isSchemaOrRlsError(err) {
+  const msg = (err?.message || err?.code || '').toString().toLowerCase();
+  return msg.includes('schema cache') || msg.includes('column') || msg.includes('row-level security') || msg.includes('pgrst');
+}
+
+function buildProblemInsertPayload(data, tier) {
+  const core = {
+    title: data.title,
+    description: data.description,
+    difficulty: data.difficulty,
+    topic: data.topic,
+    xp_reward: data.xp_reward,
+    companies: data.companies,
+    sample_input: data.sample_input,
+    sample_output: data.sample_output,
+    is_daily: data.is_daily,
+    daily_date: data.daily_date
+  };
+  if (tier >= 1) {
+    core.test_cases = data.test_cases;
+  }
+  if (tier >= 2) {
+    core.constraints = data.constraints;
+    core.hint = data.hint;
+    core.editorial = data.editorial;
+    core.hidden_test_cases = data.hidden_test_cases;
+  }
+  return core;
+}
+
+async function insertProblem(problemData) {
+  try {
+    console.log('[VidX] insertProblem payload:', problemData);
+
+    if (problemData.is_daily) {
+      try {
+        await window.db.from('problems').update({ is_daily: false }).eq('is_daily', true);
+      } catch (e) {
+        console.warn('[VidX] clear daily flag:', e);
+      }
+    }
+
+    let lastError = null;
+    for (let tier = 2; tier >= 0; tier--) {
+      const payload = buildProblemInsertPayload(problemData, tier);
+      const { data, error } = await window.db.from('problems').insert(payload).select().single();
+      if (!error) {
+        console.log('[VidX] insertProblem success (tier', tier, '):', data);
+        return data;
+      }
+      lastError = error;
+      console.warn('[VidX] insertProblem tier', tier, 'failed:', error.message);
+      if (!isSchemaOrRlsError(error)) throw error;
+    }
+
+    throw lastError || new Error('Could not insert problem. Run schema-upgrade.sql in Supabase SQL Editor.');
+  } catch (e) {
+    console.error('insertProblem:', e);
+    throw e;
+  }
+}
+
 // ─── LEADERBOARD ────────────────────────────────────────────────────────────
 
 async function getLeaderboard(limit = 50) {
@@ -487,24 +549,50 @@ async function sendNotificationToAll(message, title = 'Admin Notice') {
     const students = await adminGetAllStudents();
     if (!students.length) return { success: false, error: 'No students found.' };
 
-    const rows = students.map(s => ({
+    const withTitle = students.map(s => ({
       user_id: s.id,
       title,
       message,
       type: 'admin',
       is_read: false
     }));
+    const withoutTitle = students.map(s => ({
+      user_id: s.id,
+      message,
+      type: 'admin',
+      is_read: false
+    }));
 
-    let { error } = await window.db.from('notifications').insert(rows);
-    if (error) {
-      const fallback = students.map(s => ({ user_id: s.id, message, type: 'admin', is_read: false }));
-      const res = await window.db.from('notifications').insert(fallback);
-      if (res.error) throw res.error;
+    const attempts = [withTitle, withoutTitle];
+    let lastError = null;
+
+    for (const rows of attempts) {
+      const { error } = await window.db.from('notifications').insert(rows);
+      if (!error) return { success: true, count: rows.length };
+      lastError = error;
+      console.warn('[VidX] batch notification insert failed:', error.message);
+
+      if (isSchemaOrRlsError(error)) {
+        let sent = 0;
+        for (const row of rows) {
+          const { error: oneErr } = await window.db.from('notifications').insert(row);
+          if (!oneErr) sent++;
+          else lastError = oneErr;
+        }
+        if (sent > 0) return { success: true, count: sent };
+      } else {
+        throw error;
+      }
     }
-    return { success: true, count: rows.length };
+
+    const hint = isSchemaOrRlsError(lastError)
+      ? ' Run schema-upgrade.sql in Supabase SQL Editor to fix RLS policies.'
+      : '';
+    return { success: false, error: (lastError?.message || 'Insert failed.') + hint };
   } catch (e) {
     console.error('sendNotificationToAll:', e);
-    return { success: false, error: e.message };
+    const hint = isSchemaOrRlsError(e) ? ' Run schema-upgrade.sql in Supabase SQL Editor.' : '';
+    return { success: false, error: (e.message || 'Insert failed.') + hint };
   }
 }
 
@@ -916,68 +1004,153 @@ async function toggleLike(userId, problemId) {
   return isLiked;
 }
 
-// ─── PISTON EXECUTION ─────────────────────────────────────────────────────────
+// ─── CODE EXECUTION (Judge0 CE — Piston public API is whitelist-only since Feb 2026) ─
 
+const JUDGE0_URL = 'https://ce.judge0.com/submissions?base64_encoded=false&wait=true';
 const PISTON_URL = 'https://emkc.org/api/v2/piston/execute';
 const LANG_CONFIG = {
-  python: { language: 'python', version: '3.10.0', filename: 'main.py' },
-  java: { language: 'java', version: '15.0.2', filename: 'Main.java' },
-  cpp: { language: 'c++', version: '10.2.0', filename: 'main.cpp' },
-  javascript: { language: 'javascript', version: '18.15.0', filename: 'main.js' }
+  python: { language_id: 71, label: 'Python 3', piston: { language: 'python', version: '3.10.0', filename: 'main.py' } },
+  java: { language_id: 62, label: 'Java', piston: { language: 'java', version: '15.0.2', filename: 'Main.java' } },
+  cpp: { language_id: 54, label: 'C++', piston: { language: 'c++', version: '10.2.0', filename: 'main.cpp' } },
+  javascript: { language_id: 63, label: 'JavaScript', piston: { language: 'javascript', version: '18.15.0', filename: 'main.js' } }
 };
+
+async function executeViaPiston(langKey, code, stdin) {
+  const cfg = LANG_CONFIG[langKey];
+  if (!cfg?.piston) throw new Error('Unsupported language');
+  const res = await fetch(PISTON_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      language: cfg.piston.language,
+      version: cfg.piston.version,
+      files: [{ name: cfg.piston.filename, content: code }],
+      stdin: stdin || ''
+    })
+  });
+  const data = await res.json();
+  const run = data.run || {};
+  return {
+    stdout: run.stdout || '',
+    stderr: run.stderr || '',
+    code: run.code,
+    runtimeMs: 0,
+    memoryKb: 0
+  };
+}
 
 function normalizeOutput(s) {
   return (s || '').trim().replace(/\r\n/g, '\n').replace(/\s+$/, '');
 }
 
-async function executePistonCode(langKey, code, stdin = '', timeoutMs = 10000) {
+function formatExecutionOutput(result) {
+  const stdout = (result.stdout || '').replace(/\r\n/g, '\n').trimEnd();
+  const stderr = (result.stderr || '').replace(/\r\n/g, '\n').trimEnd();
+  if (stdout) return stdout;
+  if (stderr) return stderr;
+  return '(no output)';
+}
+
+async function executeCode(langKey, code, stdin = '', timeoutMs = 10000) {
   const cfg = LANG_CONFIG[langKey];
   if (!cfg) throw new Error('Unsupported language');
 
+  const cpuLimit = Math.max(2, Math.ceil(timeoutMs / 1000));
+  const payload = {
+    source_code: code,
+    language_id: cfg.language_id,
+    stdin: stdin || '',
+    cpu_time_limit: cpuLimit,
+    memory_limit: 128000
+  };
+
+  console.log('[VidX Execute] request:', { lang: langKey, language_id: cfg.language_id, stdinLen: (stdin || '').length, cpuLimit });
+
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout(() => controller.abort(), timeoutMs + 5000);
 
   try {
-    const res = await fetch(PISTON_URL, {
+    const res = await fetch(JUDGE0_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
-      body: JSON.stringify({
-        language: cfg.language,
-        version: cfg.version,
-        files: [{ name: cfg.filename, content: code }],
-        stdin: stdin || ''
-      })
+      body: JSON.stringify(payload)
     });
     clearTimeout(timer);
-    const data = await res.json();
-    const run = data.run || {};
-    return {
-      stdout: run.stdout || '',
-      stderr: run.stderr || '',
-      code: run.code,
-      signal: run.signal,
-      runtimeMs: Math.round((run.cpu_time || 0) * 1000) || Math.round(run.time || 0),
-      memoryKb: run.memory || 0
-    };
+
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (parseErr) {
+      console.error('[VidX Execute] non-JSON response:', raw);
+      throw new Error('Execution service returned invalid response');
+    }
+
+    console.log('[VidX Execute] response:', data);
+
+    if (!res.ok) {
+      throw new Error(data.message || data.error || `Execution HTTP ${res.status}`);
+    }
+
+    const statusId = data.status?.id;
+    const stdout = data.stdout ?? '';
+    const stderr = data.stderr ?? data.compile_output ?? '';
+    const runtimeMs = Math.round(parseFloat(data.time || 0) * 1000);
+    const memoryKb = data.memory || 0;
+
+    if (statusId === 5) {
+      return { stdout, stderr, error: 'Time Limit Exceeded', tle: true, code: 1, runtimeMs, memoryKb };
+    }
+    if (statusId === 6) {
+      return { stdout, stderr: stderr || 'Compilation Error', code: 1, runtimeMs, memoryKb };
+    }
+    if (statusId === 11 || statusId === 12) {
+      return { stdout, stderr: stderr || data.status?.description || 'Runtime Error', code: 1, runtimeMs, memoryKb };
+    }
+
+    const exitCode = statusId === 3 || statusId === 4 ? 0 : (statusId > 3 ? 1 : 0);
+    return { stdout, stderr, code: exitCode, runtimeMs, memoryKb, status: data.status?.description };
   } catch (e) {
     clearTimeout(timer);
-    if (e.name === 'AbortError') return { error: 'Time Limit Exceeded', tle: true };
-    throw e;
+    console.warn('[VidX Execute] Judge0 failed, trying Piston fallback:', e);
+    if (e.name === 'AbortError') return { error: 'Time Limit Exceeded', tle: true, stdout: '', stderr: '' };
+    try {
+      return await executeViaPiston(langKey, code, stdin);
+    } catch (pistonErr) {
+      console.error('[VidX Execute] Piston fallback failed:', pistonErr);
+      throw e;
+    }
   }
 }
 
-async function judgeSubmission(langKey, code, testCases, timeoutMs = 10000) {
-  const cases = testCases.length ? testCases : [];
+/** @deprecated Use executeCode — kept for backward compatibility */
+async function executePistonCode(langKey, code, stdin = '', timeoutMs = 10000) {
+  return executeCode(langKey, code, stdin, timeoutMs);
+}
+
+async function judgeSubmission(langKey, code, testCases, timeoutMs = 8000, onProgress) {
+  const cases = Array.isArray(testCases) && testCases.length ? testCases : [];
+  const total = cases.length || 1;
+  console.log('[VidX Judge] cases:', cases.length, 'lang:', langKey);
+
+  if (!cases.length) {
+    return { verdict: 'Wrong Answer', passed: 0, total: 0, failedCase: { error: 'No test cases configured for this problem.' }, runtimeMs: 0 };
+  }
+
   let passed = 0;
   let totalRuntime = 0;
-  let failedCase = null;
 
   for (let i = 0; i < cases.length; i++) {
     const tc = cases[i];
+    if (typeof onProgress === 'function') onProgress(i + 1, cases.length);
     try {
-      const result = await executePistonCode(langKey, code, tc.input || '', timeoutMs);
-      if (result.tle) {
+      const result = await Promise.race([
+        executeCode(langKey, code, tc.input || '', timeoutMs),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Time Limit Exceeded')), timeoutMs + 6000))
+      ]);
+
+      if (result.tle || result.error === 'Time Limit Exceeded') {
         return { verdict: 'Time Limit Exceeded', passed, total: cases.length, failedCase: { index: i + 1, reason: 'TLE' }, runtimeMs: totalRuntime };
       }
       if (result.code !== 0 && result.code !== undefined) {
@@ -991,7 +1164,14 @@ async function judgeSubmission(langKey, code, testCases, timeoutMs = 10000) {
       }
       passed++;
     } catch (e) {
-      return { verdict: 'Runtime Error', passed, total: cases.length, failedCase: { index: i + 1, error: e.message }, runtimeMs: totalRuntime };
+      const msg = e.message || 'Runtime Error';
+      return {
+        verdict: msg.includes('Time Limit') ? 'Time Limit Exceeded' : 'Runtime Error',
+        passed,
+        total: cases.length,
+        failedCase: { index: i + 1, error: msg },
+        runtimeMs: totalRuntime
+      };
     }
   }
 

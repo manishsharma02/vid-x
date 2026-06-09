@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login — VidX</title>
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+<link rel="stylesheet" href="animations.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
     :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-blue:#3b82f6;--neon-purple:#8b5cf6;--neon-cyan:#06b6d4;--neon-pink:#ec4899;--neon-green:#10b981;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);--primary:#8b5cf6;}
@@ -102,9 +103,11 @@
   </div>
   <script src="supabase.js"></script>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="animations.js"></script>
   <script>
-    AOS.init({duration:700,once:true,offset:80});
-    let loginMode = 'student';
+let loginMode = 'student';
     const ADMIN_EMAIL = 'manish@yash';
     const ADMIN_PASS = 'Sharma8888@';
 
