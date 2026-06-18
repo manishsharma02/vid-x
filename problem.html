@@ -140,7 +140,7 @@
       javascript:'const fs=require("fs");\nconst input=fs.readFileSync(0,"utf8").trim();\n'
     };
     let currentUser=null,problem=null,stats=null,related=[],bookmarked=false,liked=false,startTime=Date.now(),activeTab='problem',_submitStartTime=0;
-
+ 
     async function onDbReady(){
       currentUser=await requireAuth();if(!currentUser)return;
       const params=new URLSearchParams(window.location.search);
@@ -157,16 +157,16 @@
       loadTemplate();
       document.querySelectorAll('#tabBar .tab').forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
     }
-
+ 
     function updateActionBtns(){
       document.getElementById('bookmarkBtn').classList.toggle('active',bookmarked);
       document.getElementById('bookmarkBtn').textContent=bookmarked?'🔖 Saved':'🔖 Save';
       document.getElementById('likeBtn').classList.toggle('active',liked);
     }
-
+ 
     async function toggleBookmarkBtn(){bookmarked=await toggleBookmark(currentUser.id,problem.id);updateActionBtns();}
     async function toggleLikeBtn(){liked=await toggleLike(currentUser.id,problem.id);updateActionBtns();}
-
+ 
     function renderStats(){
       document.getElementById('statsRow').innerHTML=`
         <span>Success: <strong>${stats.successRate}%</strong></span>
@@ -174,7 +174,7 @@
         <span>Accepted: <strong>${stats.totalAccepted}</strong></span>
         <span>XP: <strong>${problem.xp_reward||50}</strong></span>`;
     }
-
+ 
     function showTab(tab){
       activeTab=tab;
       document.querySelectorAll('#tabBar .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
@@ -182,7 +182,7 @@
       const diff=problem.difficulty||'Beginner';
       const dc=diff==='Hard'?'tag-hard':diff==='Medium'?'tag-med':'tag-easy';
       const companies=(problem.companies||[]).map(c=>`<span class="tag tag-topic">${c}</span>`).join('');
-
+ 
       if(tab==='problem'){
         el.innerHTML=`<div><span class="tag ${dc}">${diff}</span><span class="tag tag-topic">${problem.topic||'General'}</span>${companies}</div>
           <h1 class="prob-title">${problem.title}</h1><div class="prob-desc">${problem.description||''}</div>
@@ -203,12 +203,22 @@
           ${sameCo.slice(0,5).map(p=>`<a href="problem.html?id=${p.id}" class="related-card">${p.title}</a>`).join('')||'<p style="color:var(--muted)">None found.</p>'}`:''}</div>`;
       }
     }
-
+ 
     let _allCache=[];
     function allProblemsCache(){return _allCache;}
-
+ 
     function loadTemplate(){document.getElementById('codeEditor').value=TEMPLATES[document.getElementById('langSelect').value];}
-
+ 
+    // ── PASTE DISABLE ──────────────────────────────────────────────────────────
+    // Blocks paste (Ctrl+V / right-click Paste) in the code editor.
+    // Typing, cut, copy, and all other keyboard input work normally.
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('codeEditor').addEventListener('paste', function(e) {
+        e.preventDefault();
+      });
+    });
+    // ──────────────────────────────────────────────────────────────────────────
+ 
     function getTestCases(){
       let visible=[], hidden=[];
       try{
@@ -219,7 +229,7 @@
       if(!tc.length&&problem.sample_input)tc=[{input:problem.sample_input,expected:problem.sample_output}];
       return tc;
     }
-
+ 
     async function runCode(){
       const btn=document.getElementById('runBtn'),out=document.getElementById('output'),meta=document.getElementById('outputMeta');
       btn.disabled=true;out.textContent='Running...';out.className='output-text';meta.textContent='';
@@ -247,7 +257,7 @@
       }
       btn.disabled=false;
     }
-
+ 
     async function submitCode(){
       const btn=document.getElementById('submitBtn'),out=document.getElementById('output'),meta=document.getElementById('outputMeta');
       btn.disabled=true;
@@ -255,17 +265,17 @@
       out.className='output-text';
       meta.textContent='';
       const submitStartTime=Date.now();
-
+ 
       try {
         const code=document.getElementById('codeEditor').value;
         const lang=document.getElementById('langSelect').value;
         const pasteMode=document.getElementById('pasteMode').checked;
         const testCases=getTestCases();
-
+ 
         const judge=await judgeSubmission(lang,code,testCases,8000,(cur,total)=>{
           out.textContent=`Judging test case ${cur} of ${total}...`;
         });
-
+ 
         const timeTaken=Math.max(1,Math.round((Date.now()-submitStartTime)/60000));
         const submissionMode=pasteMode?'paste':'code';
         const res=await submitSolution(currentUser.id,problem.id,{
@@ -273,14 +283,14 @@
           passedCases:judge.passed,totalCases:judge.total,
           runtimeMs:judge.runtimeMs,submissionMode
         });
-
+ 
         if(res.error){
           out.textContent='Submission saved with errors: '+res.error;
           out.className='output-text error';
           meta.textContent='Verdict: '+judge.verdict;
           return;
         }
-
+ 
         if(judge.verdict==='Accepted'){
           showResult('🎉','Accepted!',res);
           out.textContent=`✅ All ${judge.total} test cases passed!`;
@@ -306,13 +316,13 @@
         btn.disabled=false;
       }
     }
-
+ 
     async function submitAnswerOnly(){
       if(!confirm('Submit answer only? You will earn only +1 XP.'))return;
       const res=await submitSolution(currentUser.id,problem.id,{verdict:'Answer Only',language:'none',timeTaken:0,submissionMode:'answer'});
       showResult('📝','Answer Recorded',res);
     }
-
+ 
     function showResult(emoji,title,res){
       document.getElementById('resultEmoji').textContent=emoji;
       document.getElementById('resultTitle').textContent=title;

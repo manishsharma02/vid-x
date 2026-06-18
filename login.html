@@ -32,7 +32,7 @@
     .form-group input:focus{outline:none;border-color:var(--neon-purple);box-shadow:0 0 0 3px rgba(139,92,246,.2)}
     .form-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;font-size:.85rem}
     .form-row label{display:flex;align-items:center;gap:.4rem;color:var(--muted);cursor:pointer}
-    .form-row a{color:var(--neon-purple);text-decoration:none;font-weight:600}
+    .form-row a{color:var(--neon-purple);text-decoration:none;font-weight:600;cursor:pointer}
     .btn{width:100%;padding:.85rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;box-shadow:0 4px 20px var(--glow-purple);transition:transform .2s}
     .btn:hover{transform:translateY(-2px)}.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
     .signup-link{text-align:center;margin-top:1.5rem;font-size:.9rem;color:var(--muted)}
@@ -57,11 +57,41 @@
     .rank-nm{flex:1;font-weight:700;font-size:.9rem}
     .rank-xp{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--neon-cyan)}
     .loading{color:var(--muted);text-align:center;padding:1rem}
+    /* Forgot Password Modal */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center}
+    .modal-overlay.show{display:flex}
+    .modal-box{background:var(--bg2);border:1px solid var(--border-glow);border-radius:16px;padding:2rem;width:100%;max-width:400px;box-shadow:0 0 40px var(--glow-purple)}
+    .modal-title{font-size:1.2rem;font-weight:800;margin-bottom:.5rem}
+    .modal-sub{font-size:.85rem;color:var(--muted);margin-bottom:1.5rem}
+    .modal-input{width:100%;padding:.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif;font-size:.95rem;margin-bottom:1rem}
+    .modal-input:focus{outline:none;border-color:var(--neon-purple)}
+    .modal-btns{display:flex;gap:.75rem}
+    .modal-btn{flex:1;padding:.75rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer}
+    .modal-btn.primary{background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff}
+    .modal-btn.ghost{background:var(--bg3);color:var(--muted);border:1px solid var(--border)}
+    .modal-alert{padding:.6rem .9rem;border-radius:8px;font-size:.82rem;font-weight:600;margin-bottom:1rem;display:none}
+    .modal-alert.error{display:block;background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.3);color:var(--neon-pink)}
+    .modal-alert.success{display:block;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--neon-green)}
     @media(max-width:900px){.page{grid-template-columns:1fr}.right-panel{display:none}}
   </style>
 </head>
 <body>
   <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+ 
+  <!-- Forgot Password Modal -->
+  <div class="modal-overlay" id="forgotModal">
+    <div class="modal-box">
+      <div class="modal-title">🔑 Reset Password</div>
+      <div class="modal-sub">Enter your registered email. We'll send you a password reset link.</div>
+      <div class="modal-alert" id="forgotAlert"></div>
+      <input type="email" class="modal-input" id="forgotEmail" placeholder="you@college.edu">
+      <div class="modal-btns">
+        <button class="modal-btn ghost" onclick="closeForgotModal()">Cancel</button>
+        <button class="modal-btn primary" id="forgotBtn" onclick="sendForgotPassword()">Send Reset Link</button>
+      </div>
+    </div>
+  </div>
+ 
   <div class="page">
     <div class="left-panel">
       <div class="form-card" data-aos="fade-up">
@@ -82,7 +112,7 @@
           </div>
           <div class="form-row">
             <label><input type="checkbox" id="remember"> Remember me</label>
-            <a href="#">Forgot password?</a>
+            <a onclick="openForgotModal()">Forgot password?</a>
           </div>
           <button type="submit" class="btn" id="submitBtn">Sign In →</button>
         </form>
@@ -103,34 +133,94 @@
   </div>
   <script src="supabase.js"></script>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="animations.js"></script>
   <script>
-let loginMode = 'student';
+    let loginMode = 'student';
     const ADMIN_EMAIL = 'manish@yash';
     const ADMIN_PASS = 'Sharma8888@';
-
+ 
     function switchTab(mode) {
       loginMode = mode;
       document.getElementById('tabStudent').classList.toggle('active', mode === 'student');
       document.getElementById('tabAdmin').classList.toggle('active', mode === 'admin');
       document.getElementById('email').placeholder = mode === 'admin' ? 'Admin email' : 'you@college.edu';
     }
-
+ 
     function showAlert(msg, type) {
       const el = document.getElementById('alertBox');
       el.textContent = msg;
       el.className = 'alert ' + type;
     }
-
+ 
+    // ── Forgot Password ──────────────────────────────────────────────────────
+    function openForgotModal() {
+      document.getElementById('forgotModal').classList.add('show');
+      document.getElementById('forgotEmail').value = document.getElementById('email').value || '';
+      document.getElementById('forgotAlert').className = 'modal-alert';
+      document.getElementById('forgotAlert').textContent = '';
+    }
+ 
+    function closeForgotModal() {
+      document.getElementById('forgotModal').classList.remove('show');
+    }
+ 
+    // Close modal on overlay click
+    document.getElementById('forgotModal').addEventListener('click', function(e) {
+      if (e.target === this) closeForgotModal();
+    });
+ 
+    async function sendForgotPassword() {
+      const email = document.getElementById('forgotEmail').value.trim();
+      const alertEl = document.getElementById('forgotAlert');
+      const btn = document.getElementById('forgotBtn');
+ 
+      if (!email) {
+        alertEl.textContent = 'Please enter your email address.';
+        alertEl.className = 'modal-alert error';
+        return;
+      }
+ 
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      alertEl.className = 'modal-alert';
+ 
+      try {
+        // Build redirect URL dynamically — works on localhost and live server
+        const base = window.location.href.replace(/\/[^\/]*$/, '');
+        const redirectTo = base + '/reset-password.html';
+ 
+        const { error } = await window.db.auth.resetPasswordForEmail(email, {
+          redirectTo: redirectTo
+        });
+ 
+        if (error) {
+          alertEl.textContent = error.message || 'Failed to send reset email. Try again.';
+          alertEl.className = 'modal-alert error';
+        } else {
+          alertEl.textContent = '✅ Reset link sent! Check your email inbox (and spam folder).';
+          alertEl.className = 'modal-alert success';
+          btn.textContent = 'Sent!';
+          setTimeout(closeForgotModal, 3000);
+        }
+      } catch (e) {
+        alertEl.textContent = 'Something went wrong. Please try again.';
+        alertEl.className = 'modal-alert error';
+      }
+ 
+      btn.disabled = false;
+      if (btn.textContent !== 'Sent!') btn.textContent = 'Send Reset Link';
+    }
+ 
+    // ── Login Form ───────────────────────────────────────────────────────────
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('submitBtn');
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       btn.disabled = true; btn.textContent = 'Signing in...';
-
+ 
       if (loginMode === 'admin') {
         if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
           sessionStorage.setItem('vidx_admin', 'true');
@@ -142,7 +232,7 @@ let loginMode = 'student';
         }
         return;
       }
-
+ 
       const result = await loginStudent(email, password);
       if (result.success) {
         showAlert('Welcome back! Redirecting...', 'success');
@@ -152,14 +242,14 @@ let loginMode = 'student';
         btn.disabled = false; btn.textContent = 'Sign In →';
       }
     });
-
+ 
     function updateCountdown() {
       const c = getMidnightCountdown();
       document.getElementById('countdown').textContent = c.formatted;
     }
     setInterval(updateCountdown, 1000);
     updateCountdown();
-
+ 
     async function onDbReady() {
       const list = document.getElementById('rankList');
       const students = await getLeaderboard(4);

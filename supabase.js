@@ -1177,3 +1177,18 @@ async function judgeSubmission(langKey, code, testCases, timeoutMs = 8000, onPro
 
   return { verdict: 'Accepted', passed, total: cases.length, failedCase: null, runtimeMs: totalRuntime };
 }
+// ─── UPDATE USER PROFILE ────────────────────────────────────────────────────
+ 
+async function updateUserProfile(userId, updates) {
+  try {
+    const { error } = await window.db
+      .from('users')
+      .update(updates)
+      .eq('id', userId);
+    if (error) throw error;
+    return { success: true };
+  } catch (e) {
+    console.error('updateUserProfile:', e);
+    return { success: false, error: e.message };
+  }
+}

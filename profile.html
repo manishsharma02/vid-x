@@ -22,12 +22,13 @@
     .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;border-left:3px solid transparent;transition:all .2s}
     .nav-item:hover{color:var(--text);background:rgba(139,92,246,.05)}.nav-item.active{color:var(--text);border-left-color:var(--neon-purple);background:rgba(139,92,246,.08)}
     .sidebar-user{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
-    .user-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+    .user-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;overflow:hidden}
     .main{margin-left:var(--sidebar-w);flex:1;padding:2rem}
     .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border)}
     .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
     .profile-header{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
-    .profile-av{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;box-shadow:0 0 25px var(--glow-purple)}
+    .profile-av{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;box-shadow:0 0 25px var(--glow-purple);overflow:hidden}
+    .profile-av img,.user-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
     .profile-name{font-size:1.6rem;font-weight:800}
     .rank-badge{display:inline-block;padding:.3rem .8rem;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:100px;font-size:.8rem;font-weight:700;margin:.5rem 0}
     .join-date{font-size:.85rem;color:var(--muted)}
@@ -46,12 +47,97 @@
     .badge-item{padding:.5rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:100px;font-size:.85rem;font-weight:600}
     .btn{padding:.5rem 1.2rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;margin-top:1rem}
     .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999}.overlay.show{display:block}
-    @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:1rem}.mobile-topbar{display:flex}.stats-row{grid-template-columns:1fr 1fr}}
+ 
+    /* ── EDIT PROFILE MODAL ── */
+    .edit-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1100;align-items:center;justify-content:center;padding:1rem}
+    .edit-modal-bg.show{display:flex}
+    .edit-modal{background:var(--bg2);border:1px solid var(--border-glow);border-radius:20px;box-shadow:0 0 40px var(--glow-purple);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:2rem}
+    .edit-modal h2{font-size:1.3rem;font-weight:800;margin-bottom:1.5rem}
+    .edit-avatar-row{display:flex;align-items:center;gap:1.25rem;margin-bottom:1.5rem}
+    .edit-av-preview{width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:800;overflow:hidden;flex-shrink:0;box-shadow:0 0 18px var(--glow-purple)}
+    .edit-av-preview img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+    .edit-av-btns{display:flex;flex-direction:column;gap:.5rem}
+    .btn-upload-pic{padding:.4rem .9rem;background:var(--bg3);border:1px solid var(--border-glow);border-radius:8px;color:var(--neon-purple);font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer}
+    .btn-remove-pic{padding:.4rem .9rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Syne',sans-serif;font-weight:600;font-size:.82rem;cursor:pointer}
+    #picFileInput{display:none}
+    .form-group{margin-bottom:1rem}
+    .form-group label{display:block;font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+    .form-group input,.form-group select{width:100%;padding:.6rem .9rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s}
+    .form-group input:focus,.form-group select:focus{border-color:var(--neon-purple)}
+    .form-group select option{background:var(--bg3)}
+    .edit-modal-actions{display:flex;gap:.75rem;margin-top:1.5rem}
+    .btn-save{flex:1;padding:.65rem;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border:none;border-radius:10px;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;box-shadow:0 0 15px var(--glow-purple)}
+    .btn-cancel{padding:.65rem 1.2rem;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer}
+    .save-msg{font-size:.85rem;margin-top:.75rem;text-align:center;min-height:1.2em}
+    .save-msg.ok{color:var(--neon-green)}.save-msg.err{color:#ec4899}
+ 
+    @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:1rem}.mobile-topbar{display:flex}.stats-row{grid-template-columns:1fr 1fr}.form-row{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
   <div class="orb orb-1"></div>
   <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+ 
+  <!-- EDIT PROFILE MODAL -->
+  <div class="edit-modal-bg" id="editModalBg">
+    <div class="edit-modal">
+      <h2>✏️ Edit Profile</h2>
+      <div class="edit-avatar-row">
+        <div class="edit-av-preview" id="editAvPreview">?</div>
+        <div class="edit-av-btns">
+          <button class="btn-upload-pic" onclick="document.getElementById('picFileInput').click()">📷 Change Photo</button>
+          <button class="btn-remove-pic" onclick="removePic()">✕ Remove Photo</button>
+          <input type="file" id="picFileInput" accept="image/*" onchange="handlePicUpload(event)">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" id="editFirstName" placeholder="First name">
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" id="editLastName" placeholder="Last name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>College</label>
+        <input type="text" id="editCollege" placeholder="Your college name">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Branch</label>
+          <input type="text" id="editBranch" placeholder="e.g. CSE, IT">
+        </div>
+        <div class="form-group">
+          <label>Year</label>
+          <select id="editYear">
+            <option value="">Select year</option>
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Experience Level</label>
+        <select id="editExperience">
+          <option value="newbie">Newbie</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </div>
+      <div class="edit-modal-actions">
+        <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+        <button class="btn-save" id="btnSave" onclick="saveProfile()">Save Changes</button>
+      </div>
+      <div class="save-msg" id="saveMsg"></div>
+    </div>
+  </div>
+ 
   <div class="layout">
     <aside class="sidebar" id="sidebar">
       <a href="dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
@@ -95,22 +181,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="animations.js"></script>
   <script>
-function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
     function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+ 
     let profile=null;
+    let _editPicBase64=null; // holds new picture chosen during edit session
+ 
     async function onDbReady(){
       const user=await requireAuth();if(!user)return;
       profile=await getUserProfile(user.id);if(!profile)return;
-      const name=`${profile.first_name||''} ${profile.last_name||''}`.trim();
-      document.getElementById('sidebarAv').textContent=getInitials(profile.first_name,profile.last_name);
-      document.getElementById('sidebarName').textContent=name;
-      document.getElementById('profileAv').textContent=getInitials(profile.first_name,profile.last_name);
-      document.getElementById('profileName').textContent=name;
-      document.getElementById('profileRank').textContent=profile.rank_title||'Newbie';
-      document.getElementById('joinDate').textContent='Joined '+formatDate(profile.created_at);
-      document.getElementById('statXP').textContent=(profile.xp||0).toLocaleString();
-      document.getElementById('statSolved').textContent=profile.problems_solved||0;
-      document.getElementById('statStreak').textContent=profile.streak||0;
+      renderProfileUI();
       const rank=await getUserRank(user.id);
       document.getElementById('statRank').textContent=rank?'#'+rank:'—';
       const grid=document.getElementById('heatmap');
@@ -118,6 +198,32 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
       loadSubmissions(user.id);
       loadBadges(profile.xp||0);
     }
+ 
+    function renderProfileUI(){
+      const name=`${profile.first_name||''} ${profile.last_name||''}`.trim();
+      // Sidebar
+      renderAvatar('sidebarAv', profile.avatar_url, profile.first_name, profile.last_name, true);
+      document.getElementById('sidebarName').textContent=name||'—';
+      // Header
+      renderAvatar('profileAv', profile.avatar_url, profile.first_name, profile.last_name, false);
+      document.getElementById('profileName').textContent=name||'—';
+      document.getElementById('profileRank').textContent=profile.rank_title||'Newbie';
+      document.getElementById('joinDate').textContent='Joined '+formatDate(profile.created_at);
+      document.getElementById('statXP').textContent=(profile.xp||0).toLocaleString();
+      document.getElementById('statSolved').textContent=profile.problems_solved||0;
+      document.getElementById('statStreak').textContent=profile.streak||0;
+    }
+ 
+    function renderAvatar(elId, avatarUrl, firstName, lastName, small){
+      const el=document.getElementById(elId);
+      if(avatarUrl){
+        el.innerHTML=`<img src="${avatarUrl}" alt="avatar">`;
+      }else{
+        el.innerHTML='';
+        el.textContent=getInitials(firstName,lastName)||'?';
+      }
+    }
+ 
     async function loadSubmissions(userId){
       try{
         const {data}=await window.db.from('submissions').select('*').eq('user_id',userId).order('submitted_at',{ascending:false}).limit(20);
@@ -129,15 +235,120 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
         }).join(''):'<tr><td colspan="5" style="color:var(--muted)">No submissions yet</td></tr>';
       }catch(e){}
     }
+ 
     function loadBadges(xp){
       const badges=[];
       if(xp>=500)badges.push('🥉 Beginner Cert');if(xp>=2000)badges.push('🥈 Intermediate Cert');if(xp>=5000)badges.push('🏆 Master Cert');
       if((profile?.streak||0)>=7)badges.push('🔥 Week Streak');if((profile?.problems_solved||0)>=10)badges.push('⚡ Problem Crusher');
       document.getElementById('badges').innerHTML=badges.length?badges.map(b=>`<span class="badge-item">${b}</span>`).join(''):'<span style="color:var(--muted)">No badges yet — keep coding!</span>';
     }
+ 
+    // ── EDIT PROFILE MODAL ────────────────────────────────────────────────────
+ 
     function editProfile(){
-      const college=prompt('Update college name:',profile.college||'');if(college===null)return;
-      window.db.from('users').update({college}).eq('id',profile.id).then(()=>{profile.college=college;alert('Profile updated!');});
+      // Pre-fill form with current profile data
+      document.getElementById('editFirstName').value=profile.first_name||'';
+      document.getElementById('editLastName').value=profile.last_name||'';
+      document.getElementById('editCollege').value=profile.college||'';
+      document.getElementById('editBranch').value=profile.branch||'';
+      document.getElementById('editYear').value=profile.year||'';
+      document.getElementById('editExperience').value=profile.experience_level||'newbie';
+      document.getElementById('saveMsg').textContent='';
+      document.getElementById('saveMsg').className='save-msg';
+      _editPicBase64=null;
+      // Show current avatar in modal preview
+      const prev=document.getElementById('editAvPreview');
+      if(profile.avatar_url){
+        prev.innerHTML=`<img src="${profile.avatar_url}" alt="avatar">`;
+      }else{
+        prev.innerHTML='';
+        prev.textContent=getInitials(profile.first_name,profile.last_name)||'?';
+      }
+      document.getElementById('editModalBg').classList.add('show');
+    }
+ 
+    function closeEditModal(){
+      document.getElementById('editModalBg').classList.remove('show');
+      _editPicBase64=null;
+      document.getElementById('picFileInput').value='';
+    }
+ 
+    function handlePicUpload(e){
+      const file=e.target.files[0];
+      if(!file)return;
+      // Max 2MB check
+      if(file.size>2*1024*1024){
+        document.getElementById('saveMsg').textContent='Image too large (max 2MB).';
+        document.getElementById('saveMsg').className='save-msg err';
+        return;
+      }
+      const reader=new FileReader();
+      reader.onload=function(ev){
+        _editPicBase64=ev.target.result; // data URL (base64)
+        const prev=document.getElementById('editAvPreview');
+        prev.innerHTML=`<img src="${_editPicBase64}" alt="avatar">`;
+        document.getElementById('saveMsg').textContent='';
+      };
+      reader.readAsDataURL(file);
+    }
+ 
+    function removePic(){
+      _editPicBase64=''; // empty string = remove
+      const prev=document.getElementById('editAvPreview');
+      prev.innerHTML='';
+      prev.textContent=getInitials(
+        document.getElementById('editFirstName').value,
+        document.getElementById('editLastName').value
+      )||'?';
+    }
+ 
+    async function saveProfile(){
+      const btn=document.getElementById('btnSave');
+      const msg=document.getElementById('saveMsg');
+      btn.disabled=true;
+      btn.textContent='Saving...';
+      msg.textContent='';
+      msg.className='save-msg';
+ 
+      const updates={
+        first_name: document.getElementById('editFirstName').value.trim(),
+        last_name:  document.getElementById('editLastName').value.trim(),
+        college:    document.getElementById('editCollege').value.trim(),
+        branch:     document.getElementById('editBranch').value.trim(),
+        year:       document.getElementById('editYear').value,
+        experience_level: document.getElementById('editExperience').value
+      };
+ 
+      // Handle profile picture
+      if(_editPicBase64===''){ // user clicked Remove
+        updates.avatar_url=null;
+      }else if(_editPicBase64){ // user picked a new image
+        updates.avatar_url=_editPicBase64;
+      }
+      // if _editPicBase64===null → no change, don't touch avatar_url
+ 
+      try{
+        const result=await updateUserProfile(profile.id, updates);
+        if(result.success){
+          // Merge updates into local profile object
+          Object.assign(profile, updates);
+          if(_editPicBase64===''){ profile.avatar_url=null; }
+          else if(_editPicBase64){ profile.avatar_url=_editPicBase64; }
+          renderProfileUI();
+          msg.textContent='✓ Profile updated successfully!';
+          msg.className='save-msg ok';
+          setTimeout(()=>closeEditModal(), 1200);
+        }else{
+          msg.textContent='Error: '+(result.error||'Could not save.');
+          msg.className='save-msg err';
+        }
+      }catch(e){
+        msg.textContent='Error: '+e.message;
+        msg.className='save-msg err';
+      }
+ 
+      btn.disabled=false;
+      btn.textContent='Save Changes';
     }
   </script>
 </body>

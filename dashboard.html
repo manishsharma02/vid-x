@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -204,63 +204,84 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="animations.js"></script>
   <script>
-function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
     function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
     let currentUser=null,profile=null,lastNotifIds=new Set(),notifPollTimer=null;
     const RANKS=[{title:'Newbie',min:0,max:500},{title:'Debug Warrior',min:500,max:2000},{title:'Code Samurai',min:2000,max:5000},{title:'Legend',min:5000,max:Infinity}];
-
+ 
     function toggleNotifPanel(){document.getElementById('notifPanel').classList.toggle('show');}
     document.addEventListener('click',e=>{if(!e.target.closest('.notif-wrap'))document.getElementById('notifPanel').classList.remove('show');});
-
+ 
     function showNotifToast(title,msg){
       document.getElementById('toastTitle').textContent=title;
       document.getElementById('toastMsg').textContent=msg;
       const t=document.getElementById('notifToast');t.classList.add('show');
       setTimeout(()=>t.classList.remove('show'),5000);
     }
-
+ 
     function renderNotifItem(n,clickable=true){
       const title=getNotificationTitle(n);
       const cls=n.is_read?'':' unread';
       const click=clickable?`onclick="openNotification('${n.id}')" style="cursor:pointer"`:'';
       return `<div class="notif-panel-item${cls}" ${click}><div class="notif-panel-title">${title}</div><div class="notif-panel-msg">${n.message}</div><div class="notif-panel-time">${formatDate(n.created_at)} · ${new Date(n.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
     }
-
+ 
     async function openNotification(id){
       await markNotificationRead(id);
       loadNotifications();
     }
-
+ 
     async function markAllNotifsRead(){
       await markAllNotificationsRead(currentUser.id);
       loadNotifications();
     }
-
+ 
     async function onDbReady(){
-      currentUser=await requireAuth();if(!currentUser)return;
-      profile=await getUserProfile(currentUser.id);
-      if(!profile)return;
-      document.getElementById('greeting').textContent=`${getGreeting()}, ${profile.first_name||'Coder'} 👋`;
-      document.getElementById('sidebarAv').textContent=getInitials(profile.first_name,profile.last_name);
-      document.getElementById('sidebarName').textContent=`${profile.first_name||''} ${profile.last_name||''}`.trim();
-      document.getElementById('sidebarRank').textContent=profile.rank_title||'Newbie';
-      document.getElementById('streakCount').textContent=profile.streak||0;
-      document.getElementById('statXP').textContent=(profile.xp||0).toLocaleString();
-      document.getElementById('statSolved').textContent=profile.problems_solved||0;
-      document.getElementById('statStreak').textContent=profile.streak||0;
-      const rank=await getUserRank(currentUser.id);
-      document.getElementById('statRank').textContent=rank?'#'+rank:'—';
-      loadRankProgress(profile.xp||0);
-      loadChallenge();
+      currentUser = await requireAuth();
+      if (!currentUser) return;
+ 
+      // ── STEP 1: Profile + parallel data fetch ──────────────────────────
+      const [prof, rankPos, challenge, leaderboard, notifs, todayVote] = await Promise.all([
+        getUserProfile(currentUser.id),
+        getUserRank(currentUser.id),
+        getDailyProblem(),
+        getLeaderboard(5),
+        getNotifications(currentUser.id, 30),
+        getTodayVote(currentUser.id)
+      ]);
+ 
+      profile = prof;
+      if (!profile) return;
+ 
+      // ── STEP 2: Instantly paint UI with fetched data ───────────────────
+      document.getElementById('greeting').textContent = `${getGreeting()}, ${profile.first_name||'Coder'} 👋`;
+      document.getElementById('sidebarAv').textContent = getInitials(profile.first_name, profile.last_name);
+      document.getElementById('sidebarName').textContent = `${profile.first_name||''} ${profile.last_name||''}`.trim();
+      document.getElementById('sidebarRank').textContent = profile.rank_title || 'Newbie';
+      document.getElementById('streakCount').textContent = profile.streak || 0;
+      document.getElementById('statXP').textContent = (profile.xp || 0).toLocaleString();
+      document.getElementById('statSolved').textContent = profile.problems_solved || 0;
+      document.getElementById('statStreak').textContent = profile.streak || 0;
+      document.getElementById('statRank').textContent = rankPos ? '#' + rankPos : '—';
+ 
+      // ── STEP 3: Render all sections immediately ────────────────────────
+      loadRankProgress(profile.xp || 0);
+      renderChallenge(challenge);
       loadHeatmap();
-      loadMiniLeaderboard();
-      await loadNotifications();
-      loadWeeklyReport();
-      setupVoting();
-      setInterval(()=>{document.getElementById('challengeCountdown').textContent=getMidnightCountdown().formatted;},1000);
-      notifPollTimer=setInterval(loadNotifications,30000);
+      renderMiniLeaderboard(leaderboard);
+      renderNotifications(notifs);
+      renderWeeklyReport();
+      renderVoting(todayVote);
+ 
+      // ── STEP 4: Countdown timer ────────────────────────────────────────
+      setInterval(() => {
+        document.getElementById('challengeCountdown').textContent = getMidnightCountdown().formatted;
+      }, 1000);
+ 
+      // ── STEP 5: Poll notifications every 30s ──────────────────────────
+      notifPollTimer = setInterval(loadNotifications, 30000);
     }
-
+ 
     function loadRankProgress(xp){
       let current=RANKS[0],next=RANKS[1];
       for(let i=0;i<RANKS.length;i++){if(xp>=RANKS[i].min){current=RANKS[i];next=RANKS[i+1]||null;}}
@@ -270,45 +291,55 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
         document.getElementById('rankProgressBar').style.width=pct+'%';
       }else{document.getElementById('rankProgressText').textContent='Maximum rank achieved!';document.getElementById('rankProgressBar').style.width='100%';}
     }
-
-    async function loadChallenge(){
-      const p=await getDailyProblem();const el=document.getElementById('challengeContent');
+ 
+    function renderChallenge(p){
+      const el=document.getElementById('challengeContent');
       if(!p){el.innerHTML='<p style="color:var(--muted)">No challenge available yet.</p>';return;}
       const diff=p.difficulty||'Beginner';
-      const diffClass=diff==='Advanced'?'tag-hard':diff==='Intermediate'?'tag-med':'tag-easy';
+      const diffClass=diff==='Advanced'||diff==='Hard'?'tag-hard':diff==='Intermediate'||diff==='Medium'?'tag-med':'tag-easy';
       el.innerHTML=`<div><span class="tag ${diffClass}">${diff}</span><span class="tag tag-topic">${p.topic||'General'}</span></div>
         <h3 style="font-size:1.2rem;font-weight:800;margin:.75rem 0">${p.title}</h3>
         <p class="challenge-desc">${(p.description||'').substring(0,200)}...</p>
         <div class="challenge-meta"><span>Solved by ${p.solve_count||0} students</span><span>⭐ ${p.xp_reward||50} XP reward</span></div>
         <a href="problem.html?id=${p.id}" class="btn">Solve Now →</a>`;
     }
-
+ 
+    // Keep async version for backward compat
+    async function loadChallenge(){
+      const p = await getDailyProblem();
+      renderChallenge(p);
+    }
+ 
     function loadHeatmap(){
       const grid=document.getElementById('heatmap');
+      grid.innerHTML='';
       for(let i=0;i<112;i++){const cell=document.createElement('div');cell.className='heat-cell l'+Math.floor(Math.random()*5);grid.appendChild(cell);}
     }
-
-    async function loadMiniLeaderboard(){
-      const students=await getLeaderboard(5);
+ 
+    function renderMiniLeaderboard(students){
       document.getElementById('miniLeaderboard').innerHTML=students.map((s,i)=>
         `<div class="mini-rank"><span class="mini-pos">#${i+1}</span><div class="mini-av">${getInitials(s.first_name,s.last_name)}</div><span class="mini-name">${s.first_name||s.email}</span><span class="mini-xp">${(s.xp||0).toLocaleString()}</span></div>`
       ).join('')||'<p style="color:var(--muted);font-size:.85rem">No data</p>';
     }
-
-    async function loadNotifications(){
-      const notifs=await getNotifications(currentUser.id,30);
+ 
+    async function loadMiniLeaderboard(){
+      const students=await getLeaderboard(5);
+      renderMiniLeaderboard(students);
+    }
+ 
+    function renderNotifications(notifs){
       const unread=notifs.filter(n=>!n.is_read).length;
       const badge=document.getElementById('notifBadge');
       badge.style.display=unread?'flex':'none';
       badge.textContent=unread>9?'9+':unread;
-
+ 
       const newUnread=notifs.filter(n=>!n.is_read&&!lastNotifIds.has(n.id));
       if(lastNotifIds.size>0&&newUnread.length){
         const latest=newUnread[0];
         showNotifToast(getNotificationTitle(latest),latest.message);
       }
       notifs.forEach(n=>lastNotifIds.add(n.id));
-
+ 
       const html=notifs.length?notifs.map(n=>renderNotifItem(n)).join(''):'<p style="color:var(--muted);padding:1rem;font-size:.85rem">No notifications yet</p>';
       document.getElementById('notifPanelBody').innerHTML=html;
       document.getElementById('notifList').innerHTML=notifs.length?notifs.slice(0,5).map(n=>{
@@ -316,14 +347,19 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
         return `<div class="notif-item ${n.is_read?'':'unread'}" onclick="openNotification('${n.id}')" style="cursor:pointer"><strong style="color:var(--neon-cyan);font-size:.8rem">${title}</strong><div>${n.message}</div><div class="notif-time">${formatDate(n.created_at)}</div></div>`;
       }).join(''):'<p style="color:var(--muted);font-size:.85rem">No notifications</p>';
     }
-
-    async function loadWeeklyReport(){
+ 
+    async function loadNotifications(){
+      const notifs=await getNotifications(currentUser.id,30);
+      renderNotifications(notifs);
+    }
+ 
+    function renderWeeklyReport(){
       document.getElementById('weeklyReport').innerHTML=`You've solved <strong>${profile.problems_solved||0}</strong> problems total with <strong>${profile.streak||0}</strong> day streak. Keep pushing — your batch is watching!`;
     }
-
-    async function setupVoting(){
-      const todayVote=await getTodayVote(currentUser.id);
-      const topics=['Arrays','DP','Graphs','Trees','Strings'];
+ 
+    async function loadWeeklyReport(){ renderWeeklyReport(); }
+ 
+    function renderVoting(todayVote){
       if(todayVote){
         document.querySelectorAll('.vote-btn').forEach(b=>{b.disabled=true;if(b.dataset.topic===todayVote.vote_for)b.classList.add('selected');});
         showVoteResults();
@@ -339,7 +375,12 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
         });
       }
     }
-
+ 
+    async function setupVoting(){
+      const todayVote=await getTodayVote(currentUser.id);
+      renderVoting(todayVote);
+    }
+ 
     async function showVoteResults(){
       const today=new Date().toISOString().split('T')[0];
       const counts=await getVoteCounts(today);const total=Object.values(counts).reduce((a,b)=>a+b,0)||1;
