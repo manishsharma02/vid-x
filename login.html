@@ -1,3 +1,5 @@
+
+Login · HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login — VidX</title>
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
-<link rel="stylesheet" href="animations.css">
+  <link rel="stylesheet" href="animations.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
     :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-blue:#3b82f6;--neon-purple:#8b5cf6;--neon-cyan:#06b6d4;--neon-pink:#ec4899;--neon-green:#10b981;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);--primary:#8b5cf6;}
@@ -30,7 +32,7 @@
     .form-group label{display:block;font-size:.85rem;font-weight:600;color:var(--muted);margin-bottom:.5rem}
     .form-group input{width:100%;padding:.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif;font-size:.95rem;transition:border-color .2s,box-shadow .2s}
     .form-group input:focus{outline:none;border-color:var(--neon-purple);box-shadow:0 0 0 3px rgba(139,92,246,.2)}
-    .form-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;font-size:.85rem}
+    .form-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;font-size:.85rem;flex-wrap:wrap;gap:.5rem}
     .form-row label{display:flex;align-items:center;gap:.4rem;color:var(--muted);cursor:pointer}
     .form-row a{color:var(--neon-purple);text-decoration:none;font-weight:600;cursor:pointer}
     .btn{width:100%;padding:.85rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;box-shadow:0 4px 20px var(--glow-purple);transition:transform .2s}
@@ -52,13 +54,13 @@
     .rank-list{display:flex;flex-direction:column;gap:.6rem}
     .rank-item{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:12px;transition:border-color .2s}
     .rank-item:hover{border-color:var(--border-glow)}
-    .rank-pos{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--muted);width:28px}
-    .rank-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700}
-    .rank-nm{flex:1;font-weight:700;font-size:.9rem}
-    .rank-xp{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--neon-cyan)}
+    .rank-pos{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--muted);width:28px;flex-shrink:0}
+    .rank-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0}
+    .rank-nm{flex:1;font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rank-xp{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--neon-cyan);flex-shrink:0}
     .loading{color:var(--muted);text-align:center;padding:1rem}
     /* Forgot Password Modal */
-    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:1rem}
     .modal-overlay.show{display:flex}
     .modal-box{background:var(--bg2);border:1px solid var(--border-glow);border-radius:16px;padding:2rem;width:100%;max-width:400px;box-shadow:0 0 40px var(--glow-purple)}
     .modal-title{font-size:1.2rem;font-weight:800;margin-bottom:.5rem}
@@ -73,6 +75,10 @@
     .modal-alert.error{display:block;background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.3);color:var(--neon-pink)}
     .modal-alert.success{display:block;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--neon-green)}
     @media(max-width:900px){.page{grid-template-columns:1fr}.right-panel{display:none}}
+    @media(max-width:480px){
+      .left-panel{padding:1rem}
+      .form-card{padding:1.5rem;border-radius:12px}
+    }
   </style>
 </head>
 <body>
@@ -137,125 +143,132 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="animations.js"></script>
   <script>
-    let loginMode = 'student';
-    const ADMIN_EMAIL = 'manish@yash';
-    const ADMIN_PASS = 'Sharma8888@';
+    let loginMode='student';
+    const ADMIN_EMAIL='manish@yash';
+    const ADMIN_PASS='Sharma8888@';
  
-    function switchTab(mode) {
-      loginMode = mode;
-      document.getElementById('tabStudent').classList.toggle('active', mode === 'student');
-      document.getElementById('tabAdmin').classList.toggle('active', mode === 'admin');
-      document.getElementById('email').placeholder = mode === 'admin' ? 'Admin email' : 'you@college.edu';
+    // ── PRODUCTION URL ──────────────────────────────────────────────────────────
+    // This is your deployed GitHub Pages URL.
+    // Supabase will redirect here after the user clicks the reset email link.
+    // ALSO set this same URL in Supabase Dashboard →
+    //   Authentication → URL Configuration → Site URL
+    //   AND add it to Redirect URLs (allow list)
+    const SITE_URL = window.location.origin + 
+  (window.location.pathname.includes('vid-x') ? '/vid-x' : '');
+    // ────────────────────────────────────────────────────────────────────────────
+ 
+    function switchTab(mode){
+      loginMode=mode;
+      document.getElementById('tabStudent').classList.toggle('active',mode==='student');
+      document.getElementById('tabAdmin').classList.toggle('active',mode==='admin');
+      document.getElementById('email').placeholder=mode==='admin'?'Admin email':'you@college.edu';
     }
  
-    function showAlert(msg, type) {
-      const el = document.getElementById('alertBox');
-      el.textContent = msg;
-      el.className = 'alert ' + type;
+    function showAlert(msg,type){
+      const el=document.getElementById('alertBox');
+      el.textContent=msg;el.className='alert '+type;
     }
  
     // ── Forgot Password ──────────────────────────────────────────────────────
-    function openForgotModal() {
+    function openForgotModal(){
       document.getElementById('forgotModal').classList.add('show');
-      document.getElementById('forgotEmail').value = document.getElementById('email').value || '';
-      document.getElementById('forgotAlert').className = 'modal-alert';
-      document.getElementById('forgotAlert').textContent = '';
+      document.getElementById('forgotEmail').value=document.getElementById('email').value||'';
+      document.getElementById('forgotAlert').className='modal-alert';
+      document.getElementById('forgotAlert').textContent='';
     }
  
-    function closeForgotModal() {
+    function closeForgotModal(){
       document.getElementById('forgotModal').classList.remove('show');
     }
  
-    // Close modal on overlay click
-    document.getElementById('forgotModal').addEventListener('click', function(e) {
-      if (e.target === this) closeForgotModal();
+    document.getElementById('forgotModal').addEventListener('click',function(e){
+      if(e.target===this)closeForgotModal();
     });
  
-    async function sendForgotPassword() {
-      const email = document.getElementById('forgotEmail').value.trim();
-      const alertEl = document.getElementById('forgotAlert');
-      const btn = document.getElementById('forgotBtn');
+    async function sendForgotPassword(){
+      const email=document.getElementById('forgotEmail').value.trim();
+      const alertEl=document.getElementById('forgotAlert');
+      const btn=document.getElementById('forgotBtn');
  
-      if (!email) {
-        alertEl.textContent = 'Please enter your email address.';
-        alertEl.className = 'modal-alert error';
+      if(!email){
+        alertEl.textContent='Please enter your email address.';
+        alertEl.className='modal-alert error';
         return;
       }
  
-      btn.disabled = true;
-      btn.textContent = 'Sending...';
-      alertEl.className = 'modal-alert';
+      btn.disabled=true;btn.textContent='Sending...';
+      alertEl.className='modal-alert';
  
-      try {
-        // Build redirect URL dynamically — works on localhost and live server
-        const base = window.location.href.replace(/\/[^\/]*$/, '');
-        const redirectTo = base + '/reset-password.html';
+      try{
+        // Always use the hardcoded production URL so the reset link
+        // opens your live site — never localhost.
+        const redirectTo=SITE_URL+'/reset-password.html';
  
-        const { error } = await window.db.auth.resetPasswordForEmail(email, {
-          redirectTo: redirectTo
+        const {error}=await window.db.auth.resetPasswordForEmail(email,{
+          redirectTo:redirectTo
         });
  
-        if (error) {
-          alertEl.textContent = error.message || 'Failed to send reset email. Try again.';
-          alertEl.className = 'modal-alert error';
-        } else {
-          alertEl.textContent = '✅ Reset link sent! Check your email inbox (and spam folder).';
-          alertEl.className = 'modal-alert success';
-          btn.textContent = 'Sent!';
-          setTimeout(closeForgotModal, 3000);
+        if(error){
+          alertEl.textContent=error.message||'Failed to send reset email. Try again.';
+          alertEl.className='modal-alert error';
+        }else{
+          alertEl.textContent='✅ Reset link sent! Check your inbox and spam folder.';
+          alertEl.className='modal-alert success';
+          btn.textContent='Sent!';
+          setTimeout(closeForgotModal,3000);
         }
-      } catch (e) {
-        alertEl.textContent = 'Something went wrong. Please try again.';
-        alertEl.className = 'modal-alert error';
+      }catch(e){
+        alertEl.textContent='Something went wrong. Please try again.';
+        alertEl.className='modal-alert error';
       }
  
-      btn.disabled = false;
-      if (btn.textContent !== 'Sent!') btn.textContent = 'Send Reset Link';
+      btn.disabled=false;
+      if(btn.textContent!=='Sent!')btn.textContent='Send Reset Link';
     }
  
     // ── Login Form ───────────────────────────────────────────────────────────
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    document.getElementById('loginForm').addEventListener('submit',async(e)=>{
       e.preventDefault();
-      const btn = document.getElementById('submitBtn');
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      btn.disabled = true; btn.textContent = 'Signing in...';
+      const btn=document.getElementById('submitBtn');
+      const email=document.getElementById('email').value.trim();
+      const password=document.getElementById('password').value;
+      btn.disabled=true;btn.textContent='Signing in...';
  
-      if (loginMode === 'admin') {
-        if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
-          sessionStorage.setItem('vidx_admin', 'true');
-          showAlert('Admin login successful! Redirecting...', 'success');
-          setTimeout(() => window.location.href = 'admin-dashboard.html', 800);
-        } else {
-          showAlert('Invalid admin credentials.', 'error');
-          btn.disabled = false; btn.textContent = 'Sign In →';
+      if(loginMode==='admin'){
+        if(email===ADMIN_EMAIL&&password===ADMIN_PASS){
+          sessionStorage.setItem('vidx_admin','true');
+          showAlert('Admin login successful! Redirecting...','success');
+          setTimeout(()=>window.location.href='admin-dashboard.html',800);
+        }else{
+          showAlert('Invalid admin credentials.','error');
+          btn.disabled=false;btn.textContent='Sign In →';
         }
         return;
       }
  
-      const result = await loginStudent(email, password);
-      if (result.success) {
-        showAlert('Welcome back! Redirecting...', 'success');
-        setTimeout(() => window.location.href = 'dashboard.html', 800);
-      } else {
-        showAlert(result.error || 'Login failed.', 'error');
-        btn.disabled = false; btn.textContent = 'Sign In →';
+      const result=await loginStudent(email,password);
+      if(result.success){
+        showAlert('Welcome back! Redirecting...','success');
+        setTimeout(()=>window.location.href='dashboard.html',800);
+      }else{
+        showAlert(result.error||'Login failed.','error');
+        btn.disabled=false;btn.textContent='Sign In →';
       }
     });
  
-    function updateCountdown() {
-      const c = getMidnightCountdown();
-      document.getElementById('countdown').textContent = c.formatted;
+    function updateCountdown(){
+      const c=getMidnightCountdown();
+      document.getElementById('countdown').textContent=c.formatted;
     }
-    setInterval(updateCountdown, 1000);
+    setInterval(updateCountdown,1000);
     updateCountdown();
  
-    async function onDbReady() {
-      const list = document.getElementById('rankList');
-      const students = await getLeaderboard(4);
-      if (!students.length) { list.innerHTML = '<p class="loading">No rankings yet</p>'; return; }
-      list.innerHTML = students.map((s, i) => {
-        const name = `${s.first_name||''} ${s.last_name||''}`.trim() || s.email;
+    async function onDbReady(){
+      const list=document.getElementById('rankList');
+      const students=await getLeaderboard(4);
+      if(!students.length){list.innerHTML='<p class="loading">No rankings yet</p>';return;}
+      list.innerHTML=students.map((s,i)=>{
+        const name=`${s.first_name||''} ${s.last_name||''}`.trim()||s.email;
         return `<div class="rank-item"><span class="rank-pos mono">#${i+1}</span><div class="rank-av">${getInitials(s.first_name,s.last_name)}</div><span class="rank-nm">${name}</span><span class="rank-xp">${(s.xp||0).toLocaleString()} XP</span></div>`;
       }).join('');
     }

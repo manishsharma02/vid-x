@@ -50,7 +50,7 @@
     .paste-check{font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:.4rem}
     .btn-run:disabled,.btn-submit:disabled{opacity:.5;cursor:not-allowed}
     .code-area{flex:1;display:flex;flex-direction:column}
-    #codeEditor{flex:1;width:100%;padding:1rem;background:var(--bg3);border:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.9rem;line-height:1.6;resize:none;outline:none;tab-size:2}
+    #codeEditor{flex:1;width:100%;padding:1rem;background:var(--bg3);border:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.9rem;line-height:1.6;resize:none;outline:none;tab-size:4}
     .output-panel{height:180px;border-top:1px solid var(--border);background:var(--bg2);padding:1rem;overflow-y:auto}
     .output-label{font-size:.75rem;color:var(--muted);font-weight:700;margin-bottom:.5rem;text-transform:uppercase}
     .output-meta{font-size:.75rem;color:var(--muted);margin-bottom:.5rem}
@@ -65,7 +65,7 @@
     .btn{padding:.65rem 1.4rem;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;text-decoration:none;border:none;cursor:pointer}
     .btn-primary{background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff}
     .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
-    @media(max-width:768px){.layout{flex-direction:column}.panel-left,.panel-right{height:50vh}}
+    @media(max-width:768px){.layout{flex-direction:column;height:auto;overflow:auto}.panel-left,.panel-right{height:50vh;flex:none}}
   </style>
 </head>
 <body>
@@ -151,10 +151,7 @@
       [_allCache,stats,related]=await Promise.all([getAllProblems(),getProblemStats(problem.id),getRelatedProblems(problem)]);
       const [bm,lk]=await Promise.all([getBookmarkedProblems(currentUser.id),getLikedProblems(currentUser.id)]);
       bookmarked=bm.includes(problem.id);liked=lk.includes(problem.id);
-      updateActionBtns();
-      renderStats();
-      showTab('problem');
-      loadTemplate();
+      updateActionBtns();renderStats();showTab('problem');loadTemplate();
       document.querySelectorAll('#tabBar .tab').forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
     }
  
@@ -168,11 +165,11 @@
     async function toggleLikeBtn(){liked=await toggleLike(currentUser.id,problem.id);updateActionBtns();}
  
     function renderStats(){
-      document.getElementById('statsRow').innerHTML=`
-        <span>Success: <strong>${stats.successRate}%</strong></span>
-        <span>Attempts: <strong>${stats.totalAttempts}</strong></span>
-        <span>Accepted: <strong>${stats.totalAccepted}</strong></span>
-        <span>XP: <strong>${problem.xp_reward||50}</strong></span>`;
+      document.getElementById('statsRow').innerHTML=
+        '<span>Success: <strong>'+stats.successRate+'%</strong></span>'+
+        '<span>Attempts: <strong>'+stats.totalAttempts+'</strong></span>'+
+        '<span>Accepted: <strong>'+stats.totalAccepted+'</strong></span>'+
+        '<span>XP: <strong>'+(problem.xp_reward||50)+'</strong></span>';
     }
  
     function showTab(tab){
@@ -181,145 +178,170 @@
       const el=document.getElementById('leftContent');
       const diff=problem.difficulty||'Beginner';
       const dc=diff==='Hard'?'tag-hard':diff==='Medium'?'tag-med':'tag-easy';
-      const companies=(problem.companies||[]).map(c=>`<span class="tag tag-topic">${c}</span>`).join('');
- 
+      const companies=(problem.companies||[]).map(c=>'<span class="tag tag-topic">'+c+'</span>').join('');
       if(tab==='problem'){
-        el.innerHTML=`<div><span class="tag ${dc}">${diff}</span><span class="tag tag-topic">${problem.topic||'General'}</span>${companies}</div>
-          <h1 class="prob-title">${problem.title}</h1><div class="prob-desc">${problem.description||''}</div>
-          ${problem.constraints?`<div class="example-box"><h4>Constraints</h4><pre>${problem.constraints}</pre></div>`:''}
-          ${problem.sample_input?`<div class="example-box"><h4>Sample Input</h4><pre>${problem.sample_input}</pre></div>`:''}
-          ${problem.sample_output?`<div class="example-box"><h4>Sample Output</h4><pre>${problem.sample_output}</pre></div>`:''}`;
+        el.innerHTML='<div><span class="tag '+dc+'">'+diff+'</span><span class="tag tag-topic">'+(problem.topic||'General')+'</span>'+companies+'</div>'+
+          '<h1 class="prob-title">'+problem.title+'</h1><div class="prob-desc">'+(problem.description||'')+'</div>'+
+          (problem.constraints?'<div class="example-box"><h4>Constraints</h4><pre>'+problem.constraints+'</pre></div>':'')+
+          (problem.sample_input?'<div class="example-box"><h4>Sample Input</h4><pre>'+problem.sample_input+'</pre></div>':'')+
+          (problem.sample_output?'<div class="example-box"><h4>Sample Output</h4><pre>'+problem.sample_output+'</pre></div>':'');
       }else if(tab==='hint'){
-        el.innerHTML=`<h3 style="font-weight:800;margin-bottom:1rem">💡 Hint</h3><p style="color:var(--muted);line-height:1.8">${problem.hint||'Break the problem into smaller parts. Consider edge cases first. Try brute force, then optimize.'}</p>`;
+        el.innerHTML='<h3 style="font-weight:800;margin-bottom:1rem">💡 Hint</h3><p style="color:var(--muted);line-height:1.8">'+(problem.hint||'Break the problem into smaller parts. Consider edge cases first. Try brute force, then optimize.')+'</p>';
       }else if(tab==='editorial'){
-        el.innerHTML=`<h3 style="font-weight:800;margin-bottom:1rem">📖 Editorial</h3><p style="color:var(--muted);line-height:1.8;white-space:pre-wrap">${problem.editorial||'Editorial coming soon. Focus on understanding the '+(problem.topic||'topic')+' approach step by step.'}</p>`;
+        el.innerHTML='<h3 style="font-weight:800;margin-bottom:1rem">📖 Editorial</h3><p style="color:var(--muted);line-height:1.8;white-space:pre-wrap">'+(problem.editorial||'Editorial coming soon. Focus on understanding the '+(problem.topic||'topic')+' approach step by step.')+'</p>';
       }else if(tab==='discussion'){
-        el.innerHTML=`<h3 style="font-weight:800;margin-bottom:1rem">💬 Discussion</h3><p style="color:var(--muted)">Share approaches with batchmates on the <a href="discussions.html" style="color:var(--neon-purple)">Discussions page</a>.</p>`;
+        el.innerHTML='<h3 style="font-weight:800;margin-bottom:1rem">💬 Discussion</h3><p style="color:var(--muted)">Share approaches with batchmates on the <a href="discussions.html" style="color:var(--neon-purple)">Discussions page</a>.</p>';
       }else if(tab==='related'){
         const sameCo=allProblemsCache().filter(p=>p.id!==problem.id&&(p.companies||[]).some(c=>(problem.companies||[]).includes(c)));
-        el.innerHTML=`<div class="section-block" style="border:none;padding:0"><h3>🔗 Related Problems</h3>
-          ${related.length?related.map(p=>`<a href="problem.html?id=${p.id}" class="related-card">${p.title} <span style="color:var(--muted);font-size:.8rem">· ${p.topic}</span></a>`).join(''):'<p style="color:var(--muted)">No related problems yet.</p>'}
-          ${(problem.companies||[]).length?`<h3 style="margin-top:1.5rem">🏢 Similar Company Questions</h3>
-          ${sameCo.slice(0,5).map(p=>`<a href="problem.html?id=${p.id}" class="related-card">${p.title}</a>`).join('')||'<p style="color:var(--muted)">None found.</p>'}`:''}</div>`;
+        el.innerHTML='<div class="section-block" style="border:none;padding:0"><h3>🔗 Related Problems</h3>'+
+          (related.length?related.map(p=>'<a href="problem.html?id='+p.id+'" class="related-card">'+p.title+' <span style="color:var(--muted);font-size:.8rem">· '+p.topic+'</span></a>').join(''):'<p style="color:var(--muted)">No related problems yet.</p>')+
+          ((problem.companies||[]).length?'<h3 style="margin-top:1.5rem">🏢 Similar Company Questions</h3>'+(sameCo.slice(0,5).map(p=>'<a href="problem.html?id='+p.id+'" class="related-card">'+p.title+'</a>').join('')||'<p style="color:var(--muted)">None found.</p>'):'')+'</div>';
       }
     }
  
     let _allCache=[];
     function allProblemsCache(){return _allCache;}
- 
     function loadTemplate(){document.getElementById('codeEditor').value=TEMPLATES[document.getElementById('langSelect').value];}
  
-    // ── PASTE DISABLE ──────────────────────────────────────────────────────────
-    // Blocks paste (Ctrl+V / right-click Paste) in the code editor.
-    // Typing, cut, copy, and all other keyboard input work normally.
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('codeEditor').addEventListener('paste', function(e) {
-        e.preventDefault();
+    // ── EDITOR: paste disable + IDE indentation ───────────────────────────────
+    document.addEventListener('DOMContentLoaded',function(){
+      var editor=document.getElementById('codeEditor');
+      var INDENT='    '; // 4 spaces
+ 
+      // Block paste
+      editor.addEventListener('paste',function(e){e.preventDefault();});
+ 
+      editor.addEventListener('keydown',function(e){
+        var val=this.value;
+        var start=this.selectionStart;
+        var end=this.selectionEnd;
+ 
+        // TAB — insert 4 spaces
+        if(e.key==='Tab'&&!e.shiftKey){
+          e.preventDefault();
+          if(start===end){
+            this.value=val.substring(0,start)+INDENT+val.substring(end);
+            this.selectionStart=this.selectionEnd=start+4;
+          }else{
+            var lines=val.split('\n');
+            var charCount=0,startLine=-1,endLine=-1;
+            for(var i=0;i<lines.length;i++){
+              if(charCount<=start&&startLine===-1)startLine=i;
+              if(charCount<=end)endLine=i;
+              charCount+=lines[i].length+1;
+            }
+            for(var i=startLine;i<=endLine;i++)lines[i]=INDENT+lines[i];
+            this.value=lines.join('\n');
+            this.selectionStart=start+4;
+            this.selectionEnd=end+(4*(endLine-startLine+1));
+          }
+ 
+        // SHIFT+TAB — remove one indent level
+        }else if(e.key==='Tab'&&e.shiftKey){
+          e.preventDefault();
+          var lines=val.split('\n');
+          var charCount=0,startLine=-1,endLine=-1;
+          for(var i=0;i<lines.length;i++){
+            if(charCount<=start&&startLine===-1)startLine=i;
+            if(charCount<=end)endLine=i;
+            charCount+=lines[i].length+1;
+          }
+          var removed=0;
+          for(var i=startLine;i<=endLine;i++){
+            if(lines[i].startsWith(INDENT)){lines[i]=lines[i].substring(4);removed+=4;}
+            else if(lines[i].startsWith(' ')){var sp=lines[i].match(/^ +/)[0].length;var rem=Math.min(sp,4);lines[i]=lines[i].substring(rem);removed+=rem;}
+          }
+          this.value=lines.join('\n');
+          this.selectionStart=Math.max(0,start-4);
+          this.selectionEnd=Math.max(0,end-removed);
+ 
+        // ENTER — preserve indent + auto-indent after : or {
+        }else if(e.key==='Enter'){
+          e.preventDefault();
+          var lineStart=val.lastIndexOf('\n',start-1)+1;
+          var currentLine=val.substring(lineStart,start);
+          var leadingMatch=currentLine.match(/^(\s*)/);
+          var indent=leadingMatch?leadingMatch[1]:'';
+          var trimmed=currentLine.replace(/\s+$/,'');
+          var lang=document.getElementById('langSelect').value;
+          if(trimmed.endsWith(':')||(lang!=='python'&&trimmed.endsWith('{'))){
+            indent+=INDENT;
+          }
+          this.value=val.substring(0,start)+'\n'+indent+val.substring(end);
+          this.selectionStart=this.selectionEnd=start+1+indent.length;
+ 
+        // BACKSPACE — remove full indent block when cursor is after only spaces
+        }else if(e.key==='Backspace'&&start===end){
+          var lineStart=val.lastIndexOf('\n',start-1)+1;
+          var beforeCursor=val.substring(lineStart,start);
+          if(beforeCursor.length>0&&beforeCursor.trim()===''){
+            e.preventDefault();
+            var removeCount=beforeCursor.length%4===0?4:beforeCursor.length%4;
+            this.value=val.substring(0,start-removeCount)+val.substring(start);
+            this.selectionStart=this.selectionEnd=start-removeCount;
+          }
+        }
       });
     });
-    // ──────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
  
     function getTestCases(){
-      let visible=[], hidden=[];
+      var visible=[],hidden=[];
       try{
         visible=typeof problem.test_cases==='string'?JSON.parse(problem.test_cases):(problem.test_cases||[]);
         hidden=typeof problem.hidden_test_cases==='string'?JSON.parse(problem.hidden_test_cases):(problem.hidden_test_cases||[]);
       }catch(e){console.warn('[VidX] test case parse error:',e);}
-      let tc=[...visible,...hidden];
+      var tc=visible.concat(hidden);
       if(!tc.length&&problem.sample_input)tc=[{input:problem.sample_input,expected:problem.sample_output}];
       return tc;
     }
  
     async function runCode(){
-      const btn=document.getElementById('runBtn'),out=document.getElementById('output'),meta=document.getElementById('outputMeta');
+      var btn=document.getElementById('runBtn'),out=document.getElementById('output'),meta=document.getElementById('outputMeta');
       btn.disabled=true;out.textContent='Running...';out.className='output-text';meta.textContent='';
       try{
-        const code=document.getElementById('codeEditor').value;
-        const lang=document.getElementById('langSelect').value;
-        console.log('[VidX Run] executing', lang, 'chars:', code.length);
-        const result=await executeCode(lang,code,problem.sample_input||'');
-        console.log('[VidX Run] result:', result);
-        if(result.tle||result.error){
-          out.textContent=result.error||formatExecutionOutput(result)||'Time Limit Exceeded';
-          out.className='output-text error';
-        }else if(result.code!==0&&result.code!==undefined){
-          out.textContent=formatExecutionOutput(result)||'Runtime Error';
-          out.className='output-text error';
-        }else{
-          out.textContent=formatExecutionOutput(result);
-          out.className='output-text';
-        }
-        meta.textContent=`Runtime: ${result.runtimeMs||0}ms · Memory: ${result.memoryKb||0}KB`;
-      }catch(e){
-        console.error('[VidX Run] error:', e);
-        out.textContent='Error: '+e.message;
-        out.className='output-text error';
-      }
+        var code=document.getElementById('codeEditor').value;
+        var lang=document.getElementById('langSelect').value;
+        var result=await executeCode(lang,code,problem.sample_input||'');
+        if(result.tle||result.error){out.textContent=result.error||formatExecutionOutput(result)||'Time Limit Exceeded';out.className='output-text error';}
+        else if(result.code!==0&&result.code!==undefined){out.textContent=formatExecutionOutput(result)||'Runtime Error';out.className='output-text error';}
+        else{out.textContent=formatExecutionOutput(result);out.className='output-text';}
+        meta.textContent='Runtime: '+(result.runtimeMs||0)+'ms · Memory: '+(result.memoryKb||0)+'KB';
+      }catch(e){out.textContent='Error: '+e.message;out.className='output-text error';}
       btn.disabled=false;
     }
  
     async function submitCode(){
-      const btn=document.getElementById('submitBtn'),out=document.getElementById('output'),meta=document.getElementById('outputMeta');
-      btn.disabled=true;
-      out.textContent='Judging...';
-      out.className='output-text';
-      meta.textContent='';
-      const submitStartTime=Date.now();
- 
-      try {
-        const code=document.getElementById('codeEditor').value;
-        const lang=document.getElementById('langSelect').value;
-        const pasteMode=document.getElementById('pasteMode').checked;
-        const testCases=getTestCases();
- 
-        const judge=await judgeSubmission(lang,code,testCases,8000,(cur,total)=>{
-          out.textContent=`Judging test case ${cur} of ${total}...`;
-        });
- 
-        const timeTaken=Math.max(1,Math.round((Date.now()-submitStartTime)/60000));
-        const submissionMode=pasteMode?'paste':'code';
-        const res=await submitSolution(currentUser.id,problem.id,{
-          verdict:judge.verdict,language:lang,timeTaken,code,
-          passedCases:judge.passed,totalCases:judge.total,
-          runtimeMs:judge.runtimeMs,submissionMode
-        });
- 
-        if(res.error){
-          out.textContent='Submission saved with errors: '+res.error;
-          out.className='output-text error';
-          meta.textContent='Verdict: '+judge.verdict;
-          return;
-        }
- 
+      var btn=document.getElementById('submitBtn'),out=document.getElementById('output'),meta=document.getElementById('outputMeta');
+      btn.disabled=true;out.textContent='Judging...';out.className='output-text';meta.textContent='';
+      var submitStartTime=Date.now();
+      try{
+        var code=document.getElementById('codeEditor').value;
+        var lang=document.getElementById('langSelect').value;
+        var pasteMode=document.getElementById('pasteMode').checked;
+        var testCases=getTestCases();
+        var judge=await judgeSubmission(lang,code,testCases,8000,function(cur,total){out.textContent='Judging test case '+cur+' of '+total+'...';});
+        var timeTaken=Math.max(1,Math.round((Date.now()-submitStartTime)/60000));
+        var submissionMode=pasteMode?'paste':'code';
+        var res=await submitSolution(currentUser.id,problem.id,{verdict:judge.verdict,language:lang,timeTaken:timeTaken,code:code,passedCases:judge.passed,totalCases:judge.total,runtimeMs:judge.runtimeMs,submissionMode:submissionMode});
+        if(res.error){out.textContent='Submission saved with errors: '+res.error;out.className='output-text error';meta.textContent='Verdict: '+judge.verdict;return;}
         if(judge.verdict==='Accepted'){
           showResult('🎉','Accepted!',res);
-          out.textContent=`✅ All ${judge.total} test cases passed!`;
-          out.className='output-text success';
+          out.textContent='✅ All '+judge.total+' test cases passed!';out.className='output-text success';
         }else{
-          let msg=judge.verdict;
-          if(judge.failedCase){
-            const fc=judge.failedCase;
-            if(fc.expected)msg+=`\nTest #${fc.index}\nExpected: ${fc.expected}\nGot: ${fc.actual||'(empty)'}`;
-            else if(fc.stderr)msg+=`\n${fc.stderr}`;
-            else if(fc.error)msg+=`\n${fc.error}`;
-          }
-          msg+=`\n\n+${res.xpGained||3} XP · ${judge.passed}/${judge.total} passed`;
-          out.textContent=msg;
-          out.className='output-text error';
+          var msg=judge.verdict;
+          if(judge.failedCase){var fc=judge.failedCase;if(fc.expected)msg+='\nTest #'+fc.index+'\nExpected: '+fc.expected+'\nGot: '+(fc.actual||'(empty)');else if(fc.stderr)msg+='\n'+fc.stderr;else if(fc.error)msg+='\n'+fc.error;}
+          msg+='\n\n+'+(res.xpGained||3)+' XP · '+judge.passed+'/'+judge.total+' passed';
+          out.textContent=msg;out.className='output-text error';
         }
-        meta.textContent=`Verdict: ${judge.verdict} · Runtime: ${judge.runtimeMs||0}ms · ${judge.passed}/${judge.total} passed`;
-      } catch(e) {
-        console.error('[VidX Submit] error:', e);
-        out.textContent='Submission failed: '+(e.message||'Unknown error');
-        out.className='output-text error';
-      } finally {
-        btn.disabled=false;
-      }
+        meta.textContent='Verdict: '+judge.verdict+' · Runtime: '+(judge.runtimeMs||0)+'ms · '+judge.passed+'/'+judge.total+' passed';
+      }catch(e){out.textContent='Submission failed: '+(e.message||'Unknown error');out.className='output-text error';}
+      finally{btn.disabled=false;}
     }
  
     async function submitAnswerOnly(){
       if(!confirm('Submit answer only? You will earn only +1 XP.'))return;
-      const res=await submitSolution(currentUser.id,problem.id,{verdict:'Answer Only',language:'none',timeTaken:0,submissionMode:'answer'});
+      var res=await submitSolution(currentUser.id,problem.id,{verdict:'Answer Only',language:'none',timeTaken:0,submissionMode:'answer'});
       showResult('📝','Answer Recorded',res);
     }
  
@@ -327,9 +349,9 @@
       document.getElementById('resultEmoji').textContent=emoji;
       document.getElementById('resultTitle').textContent=title;
       document.getElementById('resultXP').textContent='+'+(res.xpGained||0)+' XP';
-      let detail=res.verdict||'';
-      if(res.position)detail+=` · Solver #${res.position}`;
-      if(res.streakBonus)detail+=` · Streak bonus +${res.streakBonus}`;
+      var detail=res.verdict||'';
+      if(res.position)detail+=' · Solver #'+res.position;
+      if(res.streakBonus)detail+=' · Streak bonus +'+res.streakBonus;
       document.getElementById('resultDetail').textContent=detail;
       document.getElementById('resultOverlay').classList.add('show');
     }

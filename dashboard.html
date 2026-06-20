@@ -1,11 +1,11 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — VidX</title>
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
-<link rel="stylesheet" href="animations.css">
+  <link rel="stylesheet" href="animations.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
     :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--bg4:#111827;--neon-blue:#3b82f6;--neon-purple:#8b5cf6;--neon-cyan:#06b6d4;--neon-pink:#ec4899;--neon-green:#10b981;--neon-yellow:#f59e0b;--glow-purple:rgba(139,92,246,0.35);--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);--sidebar-w:260px;}
@@ -17,27 +17,27 @@
     .orb-1{width:400px;height:400px;background:#8b5cf6;top:-100px;left:-100px}.orb-2{width:300px;height:300px;background:#3b82f6;bottom:-100px;right:-100px;animation-delay:3s}
     @keyframes orbFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-30px)}}
     .layout{display:flex;min-height:100vh;position:relative;z-index:1}
-    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto;transition:transform .3s}
     .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
     .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
     .nav-section{padding:1rem 0}.nav-label{padding:0 1.5rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
     .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;border-left:3px solid transparent;transition:all .2s}
-    .nav-item:hover{color:var(--text);background:rgba(139,92,246,.05);box-shadow:inset 0 0 20px rgba(139,92,246,.05)}
-    .nav-item.active{color:var(--text);border-left-color:var(--neon-purple);background:rgba(139,92,246,.08)}
+    .nav-item:hover{color:var(--text);background:rgba(139,92,246,.05)}.nav-item.active{color:var(--text);border-left-color:var(--neon-purple);background:rgba(139,92,246,.08)}
     .sidebar-user{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
-    .user-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+    .user-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0}
     .user-name{font-weight:700;font-size:.9rem}.user-rank{font-size:.75rem;color:var(--neon-purple);font-weight:600}
     .main{margin-left:var(--sidebar-w);flex:1;min-height:100vh}
-    .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
-    .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 2rem;border-bottom:1px solid var(--border)}
+    .mobile-topbar{display:none;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+    .mobile-topbar-left{display:flex;align-items:center;gap:.75rem}
+    .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer;line-height:1;padding:0}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 2rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.75rem}
     .topbar h1{font-size:1.4rem;font-weight:800}
-    .topbar-actions{display:flex;align-items:center;gap:1rem}
+    .topbar-actions{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
     .streak-badge{display:flex;align-items:center;gap:.4rem;padding:.4rem .9rem;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:100px;font-weight:700;font-size:.85rem;color:var(--neon-yellow)}
     .notif-wrap{position:relative}
     .notif-btn{position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.5rem .75rem;cursor:pointer;font-size:1.1rem}
     .notif-badge-count{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;background:var(--neon-pink);color:#fff;font-size:.65rem;font-weight:700;border-radius:100px;display:flex;align-items:center;justify-content:center;padding:0 4px}
-    .notif-panel{display:none;position:absolute;top:calc(100% + 8px);right:0;width:340px;max-height:420px;background:var(--bg2);border:1px solid var(--border-glow);border-radius:16px;box-shadow:0 0 30px var(--glow-purple);z-index:200;overflow:hidden}
+    .notif-panel{display:none;position:absolute;top:calc(100% + 8px);right:0;width:320px;max-width:calc(100vw - 2rem);max-height:420px;background:var(--bg2);border:1px solid var(--border-glow);border-radius:16px;box-shadow:0 0 30px var(--glow-purple);z-index:200;overflow:hidden}
     .notif-panel.show{display:flex;flex-direction:column}
     .notif-panel-header{display:flex;align-items:center;justify-content:space-between;padding:1rem;border-bottom:1px solid var(--border);font-weight:800;font-size:.95rem}
     .notif-panel-body{overflow-y:auto;flex:1;max-height:320px}
@@ -48,12 +48,12 @@
     .notif-panel-msg{font-size:.85rem;color:var(--muted);line-height:1.5}
     .notif-panel-time{font-size:.7rem;color:var(--muted);margin-top:.35rem}
     .notif-mark-all{background:none;border:none;color:var(--neon-purple);font-family:'Syne',sans-serif;font-weight:700;font-size:.75rem;cursor:pointer}
-    .notif-toast{position:fixed;bottom:2rem;right:2rem;max-width:360px;padding:1rem 1.25rem;background:var(--bg2);border:1px solid var(--neon-purple);border-radius:14px;box-shadow:0 0 25px var(--glow-purple);z-index:9999;transform:translateX(120%);opacity:0;transition:all .4s ease}
-    .notif-toast.show{transform:translateX(0);opacity:1}
+    .notif-toast{position:fixed;bottom:1.5rem;right:1rem;left:1rem;max-width:340px;margin:0 auto;padding:1rem 1.25rem;background:var(--bg2);border:1px solid var(--neon-purple);border-radius:14px;box-shadow:0 0 25px var(--glow-purple);z-index:9999;transform:translateY(120%);opacity:0;transition:all .4s ease}
+    .notif-toast.show{transform:translateY(0);opacity:1}
     .notif-toast-title{font-weight:800;font-size:.9rem;color:var(--neon-cyan);margin-bottom:.35rem}
     .notif-toast-msg{font-size:.85rem;color:var(--muted)}
     .content{padding:1.5rem 2rem;display:grid;grid-template-columns:1fr 320px;gap:1.5rem}
-    .content-main{display:flex;flex-direction:column;gap:1.5rem}
+    .content-main{display:flex;flex-direction:column;gap:1.5rem;min-width:0}
     .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
     .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.25rem;transition:all .3s}
     .stat-card:hover{border-color:var(--border-glow);transform:translateY(-2px);box-shadow:0 0 20px var(--glow-purple)}
@@ -62,7 +62,7 @@
     .stat-card.purple .stat-value{color:var(--neon-purple)}.stat-card.blue .stat-value{color:var(--neon-blue)}.stat-card.green .stat-value{color:var(--neon-green)}.stat-card.yellow .stat-value{color:var(--neon-yellow)}
     .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;transition:all .3s}
     .card:hover{border-color:var(--border-glow)}
-    .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+    .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem}
     .card-title{font-size:1.1rem;font-weight:800}
     .tag{display:inline-block;padding:.2rem .6rem;border-radius:100px;font-size:.75rem;font-weight:700;margin-right:.4rem}
     .tag-easy{background:rgba(16,185,129,.15);color:var(--neon-green)}.tag-med{background:rgba(245,158,11,.15);color:var(--neon-yellow)}.tag-hard{background:rgba(236,72,153,.15);color:var(--neon-pink)}
@@ -70,23 +70,23 @@
     .countdown-pill{padding:.3rem .8rem;background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.3);border-radius:100px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--neon-pink);font-weight:700}
     .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.65rem 1.4rem;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;text-decoration:none;cursor:pointer;border:none;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));color:#fff;box-shadow:0 4px 15px var(--glow-purple);transition:transform .2s}
     .btn:hover{transform:translateY(-2px)}
-    .challenge-meta{display:flex;gap:1.5rem;margin:1rem 0;font-size:.85rem;color:var(--muted)}
+    .challenge-meta{display:flex;gap:1rem;margin:1rem 0;font-size:.85rem;color:var(--muted);flex-wrap:wrap}
     .challenge-desc{color:var(--muted);font-size:.9rem;margin-bottom:1rem;line-height:1.7}
     .heatmap{display:grid;grid-template-columns:repeat(16,1fr);gap:3px}
-    .heat-cell{aspect-ratio:1;border-radius:3px;background:var(--bg3);transition:background .2s}
+    .heat-cell{aspect-ratio:1;border-radius:3px;background:var(--bg3)}
     .heat-cell.l1{background:rgba(139,92,246,.2)}.heat-cell.l2{background:rgba(139,92,246,.4)}.heat-cell.l3{background:rgba(139,92,246,.6)}.heat-cell.l4{background:rgba(139,92,246,.9)}
     .progress-wrap{margin-top:1rem}
     .progress-bar{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;margin:.75rem 0}
     .progress-fill{height:100%;background:linear-gradient(90deg,var(--neon-purple),var(--neon-blue));border-radius:4px;transition:width 1s}
     .progress-text{font-size:.85rem;color:var(--muted)}
     .rank-badge{display:inline-block;padding:.3rem .8rem;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));border-radius:100px;font-size:.8rem;font-weight:700;margin-bottom:.5rem}
-    .side-col{display:flex;flex-direction:column;gap:1rem}
+    .side-col{display:flex;flex-direction:column;gap:1rem;min-width:0}
     .mini-rank{display:flex;align-items:center;gap:.6rem;padding:.6rem 0;border-bottom:1px solid var(--border)}
     .mini-rank:last-child{border:none}
-    .mini-pos{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--muted);width:24px;font-size:.8rem}
-    .mini-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700}
-    .mini-name{flex:1;font-size:.85rem;font-weight:600}
-    .mini-xp{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--neon-cyan)}
+    .mini-pos{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--muted);width:24px;font-size:.8rem;flex-shrink:0}
+    .mini-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--neon-purple),var(--neon-blue));display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0}
+    .mini-name{flex:1;font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mini-xp{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--neon-cyan);flex-shrink:0}
     .notif-item{padding:.6rem 0;border-bottom:1px solid var(--border);font-size:.85rem}
     .notif-item.unread{border-left:3px solid var(--neon-purple);padding-left:.75rem}
     .notif-time{font-size:.75rem;color:var(--muted)}
@@ -94,15 +94,47 @@
     .vote-btn{padding:.4rem .8rem;background:var(--bg3);border:1px solid var(--border);border-radius:100px;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:600;color:var(--text);cursor:pointer;transition:all .2s}
     .vote-btn:hover,.vote-btn.selected{border-color:var(--neon-purple);background:rgba(139,92,246,.15)}
     .vote-bar{margin-top:.75rem}.vote-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;font-size:.8rem}
-    .vote-bar-track{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+    .vote-bar-track{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;min-width:0}
     .vote-bar-fill{height:100%;background:linear-gradient(90deg,var(--neon-purple),var(--neon-cyan));border-radius:3px}
-    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99}
     .overlay.show{display:block}
-    @media(max-width:1100px){.content{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+ 
+    /* ── RESPONSIVE ── */
+    @media(max-width:1100px){
+      .content{grid-template-columns:1fr}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+    }
     @media(max-width:768px){
-      .sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}
-      .main{margin-left:0}.mobile-topbar{display:flex}.topbar{padding:1rem}
-      .content{padding:1rem}.stats-grid{grid-template-columns:1fr 1fr}
+      .sidebar{transform:translateX(-100%);z-index:1000}
+      .sidebar.open{transform:translateX(0)}
+      .main{margin-left:0}
+      .mobile-topbar{display:flex}
+      .topbar{display:none}
+      .content{padding:.75rem;gap:.75rem;grid-template-columns:1fr}
+      .stats-grid{grid-template-columns:1fr 1fr;gap:.6rem}
+      .stat-card{padding:1rem}
+      .stat-value{font-size:1.4rem}
+      .card{padding:1rem}
+    }
+    @media(max-width:425px){
+      .content{padding:.6rem;gap:.6rem}
+      .stats-grid{gap:.5rem}
+      .stat-card{padding:.85rem;border-radius:12px}
+      .stat-value{font-size:1.2rem}
+      .stat-label{font-size:.72rem}
+      .card{padding:.85rem;border-radius:12px}
+      .card-title{font-size:1rem}
+      .btn{padding:.55rem 1rem;font-size:.82rem}
+      .streak-badge{font-size:.75rem;padding:.3rem .65rem}
+    }
+    @media(max-width:375px){
+      .stat-value{font-size:1.1rem}
+      .content{padding:.5rem;gap:.5rem}
+    }
+    @media(max-width:320px){
+      .stat-card{padding:.65rem}
+      .stat-value{font-size:1rem}
+      .card{padding:.7rem}
     }
   </style>
 </head>
@@ -135,13 +167,30 @@
       </div>
     </aside>
     <div class="main">
-      <div class="mobile-topbar"><button class="hamburger" onclick="toggleSidebar()">☰</button><strong>VidX</strong></div>
+      <!-- Mobile topbar -->
+      <div class="mobile-topbar">
+        <div class="mobile-topbar-left">
+          <button class="hamburger" onclick="toggleSidebar()">☰</button>
+          <strong>VidX</strong>
+        </div>
+        <div class="topbar-actions">
+          <div class="streak-badge">🔥 <span id="streakCountMobile">0</span></div>
+          <div class="notif-wrap">
+            <button class="notif-btn" onclick="toggleNotifPanel('mobile')">🔔<span class="notif-badge-count" id="notifBadgeMobile" style="display:none">0</span></button>
+            <div class="notif-panel" id="notifPanelMobile">
+              <div class="notif-panel-header"><span>Notifications</span><button class="notif-mark-all" onclick="markAllNotifsRead()">Mark All Read</button></div>
+              <div class="notif-panel-body" id="notifPanelBodyMobile"><p style="color:var(--muted);padding:1rem;font-size:.85rem">Loading...</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Desktop topbar -->
       <div class="topbar">
         <h1 id="greeting">Loading...</h1>
         <div class="topbar-actions">
           <div class="streak-badge">🔥 <span id="streakCount">0</span> day streak</div>
           <div class="notif-wrap">
-            <button class="notif-btn" id="notifBtn" onclick="toggleNotifPanel()">🔔<span class="notif-badge-count" id="notifBadge" style="display:none">0</span></button>
+            <button class="notif-btn" id="notifBtn" onclick="toggleNotifPanel('desktop')">🔔<span class="notif-badge-count" id="notifBadge" style="display:none">0</span></button>
             <div class="notif-panel" id="notifPanel">
               <div class="notif-panel-header"><span>Notifications</span><button class="notif-mark-all" onclick="markAllNotifsRead()">Mark All Read</button></div>
               <div class="notif-panel-body" id="notifPanelBody"><p style="color:var(--muted);padding:1rem;font-size:.85rem">Loading...</p></div>
@@ -200,17 +249,33 @@
   <div class="notif-toast" id="notifToast"><div class="notif-toast-title" id="toastTitle"></div><div class="notif-toast-msg" id="toastMsg"></div></div>
   <script src="supabase.js"></script>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="animations.js"></script>
   <script>
-    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
-    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+    function toggleSidebar(){
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('overlay').classList.toggle('show');
+    }
+    function closeSidebar(){
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('overlay').classList.remove('show');
+    }
+ 
     let currentUser=null,profile=null,lastNotifIds=new Set(),notifPollTimer=null;
     const RANKS=[{title:'Newbie',min:0,max:500},{title:'Debug Warrior',min:500,max:2000},{title:'Code Samurai',min:2000,max:5000},{title:'Legend',min:5000,max:Infinity}];
  
-    function toggleNotifPanel(){document.getElementById('notifPanel').classList.toggle('show');}
-    document.addEventListener('click',e=>{if(!e.target.closest('.notif-wrap'))document.getElementById('notifPanel').classList.remove('show');});
+    function toggleNotifPanel(which){
+      const panelId=which==='mobile'?'notifPanelMobile':'notifPanel';
+      const otherPanelId=which==='mobile'?'notifPanel':'notifPanelMobile';
+      document.getElementById(otherPanelId).classList.remove('show');
+      document.getElementById(panelId).classList.toggle('show');
+    }
+    document.addEventListener('click',e=>{
+      if(!e.target.closest('.notif-wrap')){
+        document.querySelectorAll('.notif-panel').forEach(p=>p.classList.remove('show'));
+      }
+    });
  
     function showNotifToast(title,msg){
       document.getElementById('toastTitle').textContent=title;
@@ -219,11 +284,10 @@
       setTimeout(()=>t.classList.remove('show'),5000);
     }
  
-    function renderNotifItem(n,clickable=true){
+    function renderNotifItem(n){
       const title=getNotificationTitle(n);
       const cls=n.is_read?'':' unread';
-      const click=clickable?`onclick="openNotification('${n.id}')" style="cursor:pointer"`:'';
-      return `<div class="notif-panel-item${cls}" ${click}><div class="notif-panel-title">${title}</div><div class="notif-panel-msg">${n.message}</div><div class="notif-panel-time">${formatDate(n.created_at)} · ${new Date(n.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+      return `<div class="notif-panel-item${cls}" onclick="openNotification('${n.id}')" style="cursor:pointer"><div class="notif-panel-title">${title}</div><div class="notif-panel-msg">${n.message}</div><div class="notif-panel-time">${formatDate(n.created_at)}</div></div>`;
     }
  
     async function openNotification(id){
@@ -237,35 +301,33 @@
     }
  
     async function onDbReady(){
-      currentUser = await requireAuth();
-      if (!currentUser) return;
+      currentUser=await requireAuth();
+      if(!currentUser)return;
  
-      // ── STEP 1: Profile + parallel data fetch ──────────────────────────
-      const [prof, rankPos, challenge, leaderboard, notifs, todayVote] = await Promise.all([
+      const [prof,rankPos,challenge,leaderboard,notifs,todayVote]=await Promise.all([
         getUserProfile(currentUser.id),
         getUserRank(currentUser.id),
         getDailyProblem(),
         getLeaderboard(5),
-        getNotifications(currentUser.id, 30),
+        getNotifications(currentUser.id,30),
         getTodayVote(currentUser.id)
       ]);
  
-      profile = prof;
-      if (!profile) return;
+      profile=prof;
+      if(!profile)return;
  
-      // ── STEP 2: Instantly paint UI with fetched data ───────────────────
-      document.getElementById('greeting').textContent = `${getGreeting()}, ${profile.first_name||'Coder'} 👋`;
-      document.getElementById('sidebarAv').textContent = getInitials(profile.first_name, profile.last_name);
-      document.getElementById('sidebarName').textContent = `${profile.first_name||''} ${profile.last_name||''}`.trim();
-      document.getElementById('sidebarRank').textContent = profile.rank_title || 'Newbie';
-      document.getElementById('streakCount').textContent = profile.streak || 0;
-      document.getElementById('statXP').textContent = (profile.xp || 0).toLocaleString();
-      document.getElementById('statSolved').textContent = profile.problems_solved || 0;
-      document.getElementById('statStreak').textContent = profile.streak || 0;
-      document.getElementById('statRank').textContent = rankPos ? '#' + rankPos : '—';
+      document.getElementById('greeting').textContent=`${getGreeting()}, ${profile.first_name||'Coder'} 👋`;
+      document.getElementById('sidebarAv').textContent=getInitials(profile.first_name,profile.last_name);
+      document.getElementById('sidebarName').textContent=`${profile.first_name||''} ${profile.last_name||''}`.trim();
+      document.getElementById('sidebarRank').textContent=profile.rank_title||'Newbie';
+      document.getElementById('streakCount').textContent=profile.streak||0;
+      document.getElementById('streakCountMobile').textContent=(profile.streak||0)+' day streak';
+      document.getElementById('statXP').textContent=(profile.xp||0).toLocaleString();
+      document.getElementById('statSolved').textContent=profile.problems_solved||0;
+      document.getElementById('statStreak').textContent=profile.streak||0;
+      document.getElementById('statRank').textContent=rankPos?'#'+rankPos:'—';
  
-      // ── STEP 3: Render all sections immediately ────────────────────────
-      loadRankProgress(profile.xp || 0);
+      loadRankProgress(profile.xp||0);
       renderChallenge(challenge);
       loadHeatmap();
       renderMiniLeaderboard(leaderboard);
@@ -273,23 +335,26 @@
       renderWeeklyReport();
       renderVoting(todayVote);
  
-      // ── STEP 4: Countdown timer ────────────────────────────────────────
-      setInterval(() => {
-        document.getElementById('challengeCountdown').textContent = getMidnightCountdown().formatted;
-      }, 1000);
+      setInterval(()=>{
+        document.getElementById('challengeCountdown').textContent=getMidnightCountdown().formatted;
+      },1000);
  
-      // ── STEP 5: Poll notifications every 30s ──────────────────────────
-      notifPollTimer = setInterval(loadNotifications, 30000);
+      notifPollTimer=setInterval(loadNotifications,30000);
     }
  
     function loadRankProgress(xp){
       let current=RANKS[0],next=RANKS[1];
       for(let i=0;i<RANKS.length;i++){if(xp>=RANKS[i].min){current=RANKS[i];next=RANKS[i+1]||null;}}
       document.getElementById('rankBadge').textContent=current.title;
-      if(next){const needed=next.min-xp;const pct=Math.min(100,((xp-current.min)/(next.min-current.min))*100);
+      if(next){
+        const needed=next.min-xp;
+        const pct=Math.min(100,((xp-current.min)/(next.min-current.min))*100);
         document.getElementById('rankProgressText').textContent=`${needed.toLocaleString()} XP more to reach ${next.title}`;
         document.getElementById('rankProgressBar').style.width=pct+'%';
-      }else{document.getElementById('rankProgressText').textContent='Maximum rank achieved!';document.getElementById('rankProgressBar').style.width='100%';}
+      }else{
+        document.getElementById('rankProgressText').textContent='Maximum rank achieved!';
+        document.getElementById('rankProgressBar').style.width='100%';
+      }
     }
  
     function renderChallenge(p){
@@ -298,16 +363,10 @@
       const diff=p.difficulty||'Beginner';
       const diffClass=diff==='Advanced'||diff==='Hard'?'tag-hard':diff==='Intermediate'||diff==='Medium'?'tag-med':'tag-easy';
       el.innerHTML=`<div><span class="tag ${diffClass}">${diff}</span><span class="tag tag-topic">${p.topic||'General'}</span></div>
-        <h3 style="font-size:1.2rem;font-weight:800;margin:.75rem 0">${p.title}</h3>
+        <h3 style="font-size:1.1rem;font-weight:800;margin:.75rem 0">${p.title}</h3>
         <p class="challenge-desc">${(p.description||'').substring(0,200)}...</p>
         <div class="challenge-meta"><span>Solved by ${p.solve_count||0} students</span><span>⭐ ${p.xp_reward||50} XP reward</span></div>
         <a href="problem.html?id=${p.id}" class="btn">Solve Now →</a>`;
-    }
- 
-    // Keep async version for backward compat
-    async function loadChallenge(){
-      const p = await getDailyProblem();
-      renderChallenge(p);
     }
  
     function loadHeatmap(){
@@ -322,26 +381,24 @@
       ).join('')||'<p style="color:var(--muted);font-size:.85rem">No data</p>';
     }
  
-    async function loadMiniLeaderboard(){
-      const students=await getLeaderboard(5);
-      renderMiniLeaderboard(students);
-    }
- 
     function renderNotifications(notifs){
       const unread=notifs.filter(n=>!n.is_read).length;
-      const badge=document.getElementById('notifBadge');
-      badge.style.display=unread?'flex':'none';
-      badge.textContent=unread>9?'9+':unread;
+      ['notifBadge','notifBadgeMobile'].forEach(id=>{
+        const b=document.getElementById(id);
+        if(b){b.style.display=unread?'flex':'none';b.textContent=unread>9?'9+':unread;}
+      });
  
       const newUnread=notifs.filter(n=>!n.is_read&&!lastNotifIds.has(n.id));
       if(lastNotifIds.size>0&&newUnread.length){
-        const latest=newUnread[0];
-        showNotifToast(getNotificationTitle(latest),latest.message);
+        showNotifToast(getNotificationTitle(newUnread[0]),newUnread[0].message);
       }
       notifs.forEach(n=>lastNotifIds.add(n.id));
  
       const html=notifs.length?notifs.map(n=>renderNotifItem(n)).join(''):'<p style="color:var(--muted);padding:1rem;font-size:.85rem">No notifications yet</p>';
-      document.getElementById('notifPanelBody').innerHTML=html;
+      ['notifPanelBody','notifPanelBodyMobile'].forEach(id=>{
+        const el=document.getElementById(id);if(el)el.innerHTML=html;
+      });
+ 
       document.getElementById('notifList').innerHTML=notifs.length?notifs.slice(0,5).map(n=>{
         const title=getNotificationTitle(n);
         return `<div class="notif-item ${n.is_read?'':'unread'}" onclick="openNotification('${n.id}')" style="cursor:pointer"><strong style="color:var(--neon-cyan);font-size:.8rem">${title}</strong><div>${n.message}</div><div class="notif-time">${formatDate(n.created_at)}</div></div>`;
@@ -356,8 +413,6 @@
     function renderWeeklyReport(){
       document.getElementById('weeklyReport').innerHTML=`You've solved <strong>${profile.problems_solved||0}</strong> problems total with <strong>${profile.streak||0}</strong> day streak. Keep pushing — your batch is watching!`;
     }
- 
-    async function loadWeeklyReport(){ renderWeeklyReport(); }
  
     function renderVoting(todayVote){
       if(todayVote){
@@ -376,19 +431,15 @@
       }
     }
  
-    async function setupVoting(){
-      const todayVote=await getTodayVote(currentUser.id);
-      renderVoting(todayVote);
-    }
- 
     async function showVoteResults(){
       const today=new Date().toISOString().split('T')[0];
-      const counts=await getVoteCounts(today);const total=Object.values(counts).reduce((a,b)=>a+b,0)||1;
+      const counts=await getVoteCounts(today);
+      const total=Object.values(counts).reduce((a,b)=>a+b,0)||1;
       const topics=['Arrays','DP','Graphs','Trees','Strings'];
       document.getElementById('voteResults').style.display='block';
       document.getElementById('voteResults').innerHTML=topics.map(t=>{
         const c=counts[t]||0;const pct=Math.round((c/total)*100);
-        return `<div class="vote-row"><span style="width:60px">${t}</span><div class="vote-bar-track"><div class="vote-bar-fill" style="width:${pct}%"></div></div><span class="mono">${c}</span></div>`;
+        return `<div class="vote-row"><span style="width:55px;flex-shrink:0;font-size:.78rem">${t}</span><div class="vote-bar-track"><div class="vote-bar-fill" style="width:${pct}%"></div></div><span class="mono" style="flex-shrink:0">${c}</span></div>`;
       }).join('');
     }
   </script>
