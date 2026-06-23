@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placement Cell — VidX Admin</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <link rel="stylesheet" href="animations.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-red:#ef4444;--neon-purple:#8b5cf6;--neon-cyan:#06b6d4;--neon-green:#10b981;--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--sidebar-w:260px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    .layout{display:flex;min-height:100vh}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);padding:1.5rem 0;z-index:100;overflow-y:auto}
+    .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-red),#f97316);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
+    .admin-badge{padding:0 1.5rem;font-size:.8rem;color:var(--neon-red);font-weight:700;margin-top:.5rem}
+    .nav-section{padding:1rem 0}.nav-label{padding:0 1.5rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;border-left:3px solid transparent}
+    .nav-item:hover,.nav-item.active{color:var(--text);background:rgba(239,68,68,.08);border-left-color:var(--neon-red)}
+    .main{margin-left:var(--sidebar-w);flex:1;padding:2rem}
+    .tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
+    .tab-btn{padding:.55rem 1rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-family:'Syne',sans-serif;font-weight:700;cursor:pointer}
+    .tab-btn.active{background:rgba(239,68,68,.12);border-color:var(--neon-red);color:var(--text)}
+    .panel{display:none}.panel.active{display:block}
+    .form-card,.table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .form-group{margin-bottom:1rem}.form-group.full{grid-column:1/-1}
+    .form-group label{display:block;font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:.4rem}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:.75rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif}
+    .btn{padding:.65rem 1.4rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--neon-red),#f97316);color:#fff}
+    table{width:100%;border-collapse:collapse}th,td{padding:.75rem;text-align:left;border-bottom:1px solid var(--border);font-size:.9rem}
+    th{color:var(--muted);font-size:.75rem;text-transform:uppercase;background:var(--bg3)}
+    .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
+    .stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem}
+    .stat-box strong{font-size:1.4rem;color:var(--neon-cyan)}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%)}.main{margin-left:0;padding:1rem}.form-grid,.stat-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="admin-dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
+      <div class="admin-badge">🔴 Admin Panel</div>
+      <div class="nav-section"><div class="nav-label">Control</div>
+        <a href="admin-dashboard.html" class="nav-item">📊 Dashboard</a>
+        <a href="admin-problems.html" class="nav-item">📝 Manage Problems</a>
+        <a href="admin-battles.html" class="nav-item">⚔️ Manage Battles</a>
+        <a href="admin-students.html" class="nav-item">👥 Manage Students</a>
+        <a href="admin-leaderboard.html" class="nav-item">🏆 Manage Leaderboard</a>
+        <a href="admin-placement.html" class="nav-item active">🎯 Placement Cell</a>
+      </div>
+    </aside>
+    <div class="main">
+      <h1 style="font-size:1.6rem;font-weight:800;margin-bottom:1rem">🎯 Placement Cell Management</h1>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showPanel('analytics',this)">Analytics</button>
+        <button class="tab-btn" onclick="showPanel('companies',this)">Companies</button>
+        <button class="tab-btn" onclick="showPanel('drives',this)">Drives</button>
+        <button class="tab-btn" onclick="showPanel('tests',this)">Tests</button>
+        <button class="tab-btn" onclick="showPanel('proctor',this)">Proctoring</button>
+      </div>
+
+      <div class="panel active" id="panel-analytics">
+        <div class="stat-grid" id="analyticsStats"></div>
+        <div class="table-wrap"><h3 style="margin-bottom:1rem">Top Performers</h3><div id="topPerformers"></div></div>
+      </div>
+
+      <div class="panel" id="panel-companies">
+        <div class="form-card">
+          <h3 style="margin-bottom:1rem">Add Company</h3>
+          <form id="companyForm" class="form-grid">
+            <div class="form-group"><label>Name</label><input id="coName" required placeholder="Amazon"></div>
+            <div class="form-group"><label>Package / CTC</label><input id="coPackage" placeholder="12 LPA"></div>
+            <div class="form-group full"><label>Logo URL</label><input id="coLogo" placeholder="https://..."></div>
+            <div class="form-group full"><label>Eligibility</label><textarea id="coElig" rows="2"></textarea></div>
+            <div class="form-group full"><label>Job Description</label><textarea id="coJob" rows="3"></textarea></div>
+            <div class="form-group full"><label>Skills (comma separated)</label><input id="coSkills" placeholder="DSA, Java, SQL"></div>
+            <div class="form-group full"><button type="submit" class="btn">Save Company</button></div>
+          </form>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Company</th><th>Package</th><th>Actions</th></tr></thead><tbody id="companyTable"></tbody></table></div>
+      </div>
+
+      <div class="panel" id="panel-drives">
+        <div class="form-card">
+          <h3 style="margin-bottom:1rem">Create Drive</h3>
+          <form id="driveForm" class="form-grid">
+            <div class="form-group full"><label>Title</label><input id="drTitle" required></div>
+            <div class="form-group"><label>Company</label><select id="drCompany"></select></div>
+            <div class="form-group"><label>Drive Date</label><input type="datetime-local" id="drDate"></div>
+            <div class="form-group"><label>Registration Deadline</label><input type="datetime-local" id="drDeadline"></div>
+            <div class="form-group"><label>Eligible Branches (comma)</label><input id="drBranches" placeholder="CSE, IT"></div>
+            <div class="form-group"><label>Eligible Years (comma)</label><input id="drYears" placeholder="3, 4"></div>
+            <div class="form-group full"><label>Description</label><textarea id="drDesc" rows="3"></textarea></div>
+            <div class="form-group full"><button type="submit" class="btn">Create Drive</button></div>
+          </form>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Drive</th><th>Company</th><th>Date</th></tr></thead><tbody id="driveTable"></tbody></table></div>
+      </div>
+
+      <div class="panel" id="panel-tests">
+        <div class="form-card">
+          <h3 style="margin-bottom:1rem">Schedule Placement Test</h3>
+          <form id="testForm" class="form-grid">
+            <div class="form-group full"><label>Title</label><input id="teTitle" required></div>
+            <div class="form-group"><label>Type</label><select id="teType"><option value="mixed">Mixed</option><option value="mcq">MCQ</option><option value="coding">Coding</option></select></div>
+            <div class="form-group"><label>Duration (mins)</label><input type="number" id="teDuration" value="60"></div>
+            <div class="form-group"><label>Start</label><input type="datetime-local" id="teStart" required></div>
+            <div class="form-group"><label>End</label><input type="datetime-local" id="teEnd" required></div>
+            <div class="form-group"><label>Proctoring</label><select id="teProctor"><option value="standard">Standard</option><option value="advanced">Advanced AI</option></select></div>
+            <div class="form-group"><label>Eligible Branches</label><input id="teBranches" placeholder="CSE"></div>
+            <div class="form-group"><label>Eligible Years</label><input id="teYears" placeholder="4"></div>
+            <div class="form-group full"><label>MCQ Question</label><textarea id="teQ" rows="2" placeholder="What is O(n)?"></textarea></div>
+            <div class="form-group"><label>Option A</label><input id="teA"></div>
+            <div class="form-group"><label>Option B</label><input id="teB"></div>
+            <div class="form-group"><label>Correct (A/B)</label><input id="teCorrect" value="A"></div>
+            <div class="form-group"><label>Marks</label><input type="number" id="teMarks" value="5"></div>
+            <div class="form-group full"><label><input type="checkbox" id="tePublish"> Publish immediately</label></div>
+            <div class="form-group full"><button type="submit" class="btn">Create Test</button></div>
+          </form>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Test</th><th>Window</th><th>Status</th><th>Actions</th></tr></thead><tbody id="testTable"></tbody></table></div>
+      </div>
+
+      <div class="panel" id="panel-proctor">
+        <div class="table-wrap"><h3 style="margin-bottom:1rem">Recent Proctoring Events</h3><div id="proctorLog"><p style="color:var(--muted)">Loading...</p></div></div>
+      </div>
+    </div>
+  </div>
+  <script src="supabase.js"></script>
+  <script src="animations.js"></script>
+  <script>
+    function showPanel(id, btn) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('panel-' + id).classList.add('active');
+      btn.classList.add('active');
+    }
+    function splitCsv(v) { return (v || '').split(',').map(s => s.trim()).filter(Boolean); }
+
+    function onDbReady() {
+      if (!requirePlacementAdmin()) return;
+      loadAnalytics();
+      loadCompanies();
+      loadDrives();
+      loadTests();
+      loadProctorLog();
+    }
+
+    async function loadAnalytics() {
+      const a = await getPlacementAnalytics();
+      if (!a) return;
+      document.getElementById('analyticsStats').innerHTML = `
+        <div class="stat-box"><div>Eligible Students</div><strong>${a.totalEligible}</strong></div>
+        <div class="stat-box"><div>Registered</div><strong>${a.totalRegistered}</strong></div>
+        <div class="stat-box"><div>Appeared</div><strong>${a.totalAppeared}</strong></div>
+        <div class="stat-box"><div>Selected</div><strong>${a.totalSelected}</strong></div>
+        <div class="stat-box"><div>Avg Score</div><strong>${a.averageScore}</strong></div>
+        <div class="stat-box"><div>Active Tests</div><strong>${a.tests.length}</strong></div>`;
+      document.getElementById('topPerformers').innerHTML = a.topPerformers.length
+        ? a.topPerformers.map((t, i) => `<div style="padding:.5rem 0;border-bottom:1px solid var(--border)">#${i + 1} · Score ${t.score}/${t.max_score} · Risk ${t.risk_score}</div>`).join('')
+        : '<p style="color:var(--muted)">No completed attempts yet</p>';
+    }
+
+    async function loadCompanies() {
+      const list = await getPlacementCompanies();
+      document.getElementById('companyTable').innerHTML = list.map(c =>
+        `<tr><td>${c.name}</td><td>${c.package_ctc || '—'}</td><td><button onclick="deleteCo('${c.id}')">Delete</button></td></tr>`
+      ).join('') || '<tr><td colspan="3">No companies</td></tr>';
+      document.getElementById('drCompany').innerHTML = list.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    }
+
+    document.getElementById('companyForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const r = await savePlacementCompany({
+        name: document.getElementById('coName').value.trim(),
+        package_ctc: document.getElementById('coPackage').value.trim(),
+        logo_url: document.getElementById('coLogo').value.trim(),
+        eligibility_criteria: document.getElementById('coElig').value.trim(),
+        job_description: document.getElementById('coJob').value.trim(),
+        skills_required: splitCsv(document.getElementById('coSkills').value)
+      });
+      alert(r.success ? 'Company saved!' : r.error);
+      if (r.success) { e.target.reset(); loadCompanies(); }
+    });
+
+    async function deleteCo(id) {
+      if (!confirm('Delete company?')) return;
+      await deletePlacementCompany(id);
+      loadCompanies();
+    }
+
+    document.getElementById('driveForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const r = await savePlacementDrive({
+        title: document.getElementById('drTitle').value.trim(),
+        company_id: document.getElementById('drCompany').value || null,
+        drive_date: document.getElementById('drDate').value,
+        registration_deadline: document.getElementById('drDeadline').value,
+        job_description: document.getElementById('drDesc').value.trim(),
+        eligible_branches: splitCsv(document.getElementById('drBranches').value),
+        eligible_years: splitCsv(document.getElementById('drYears').value),
+        is_active: true
+      });
+      alert(r.success ? 'Drive created!' : r.error);
+      if (r.success) { e.target.reset(); loadDrives(); }
+    });
+
+    async function loadDrives() {
+      const list = await getPlacementDrives();
+      document.getElementById('driveTable').innerHTML = list.map(d =>
+        `<tr><td>${d.title}</td><td>${d.placement_companies?.name || '—'}</td><td>${d.drive_date ? new Date(d.drive_date).toLocaleString() : '—'}</td></tr>`
+      ).join('') || '<tr><td colspan="3">No drives</td></tr>';
+    }
+
+    document.getElementById('testForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const qText = document.getElementById('teQ').value.trim();
+      const test = {
+        title: document.getElementById('teTitle').value.trim(),
+        test_type: document.getElementById('teType').value,
+        duration_mins: parseInt(document.getElementById('teDuration').value) || 60,
+        start_time: new Date(document.getElementById('teStart').value).toISOString(),
+        end_time: new Date(document.getElementById('teEnd').value).toISOString(),
+        proctoring_mode: document.getElementById('teProctor').value,
+        eligible_branches: splitCsv(document.getElementById('teBranches').value),
+        eligible_years: splitCsv(document.getElementById('teYears').value),
+        is_published: document.getElementById('tePublish').checked,
+        require_fullscreen: true
+      };
+      const questions = qText ? [{
+        question_type: 'mcq',
+        question_text: qText,
+        options: [{ key: 'A', text: document.getElementById('teA').value }, { key: 'B', text: document.getElementById('teB').value }],
+        correct_option: document.getElementById('teCorrect').value.trim(),
+        marks: parseInt(document.getElementById('teMarks').value) || 5,
+        difficulty: 'Medium'
+      }] : [];
+      const r = await savePlacementTest(test, questions);
+      alert(r.success ? 'Test scheduled!' : r.error);
+      if (r.success) { e.target.reset(); loadTests(); }
+    });
+
+    async function loadTests() {
+      const list = await getPlacementTests();
+      document.getElementById('testTable').innerHTML = list.map(t =>
+        `<tr><td>${t.title}</td><td>${new Date(t.start_time).toLocaleString()} – ${new Date(t.end_time).toLocaleString()}</td><td>${t.is_published ? 'Published' : 'Draft'}</td><td><button onclick="deleteTe('${t.id}')">Delete</button></td></tr>`
+      ).join('') || '<tr><td colspan="4">No tests</td></tr>';
+    }
+
+    async function deleteTe(id) {
+      if (!confirm('Delete test?')) return;
+      await deletePlacementTest(id);
+      loadTests();
+    }
+
+    async function loadProctorLog() {
+      try {
+        const { data } = await window.db.from('placement_proctor_events').select('*').order('created_at', { ascending: false }).limit(30);
+        document.getElementById('proctorLog').innerHTML = (data || []).map(e =>
+          `<div style="padding:.6rem 0;border-bottom:1px solid var(--border);font-size:.85rem"><strong>${e.event_type}</strong> · ${e.severity} · ${new Date(e.created_at).toLocaleString()}</div>`
+        ).join('') || '<p style="color:var(--muted)">No violations logged yet</p>';
+      } catch (e) {
+        document.getElementById('proctorLog').innerHTML = '<p style="color:var(--muted)">Run placement-migration.sql to enable proctoring logs.</p>';
+      }
+    }
+  </script>
+</body>
+</html>

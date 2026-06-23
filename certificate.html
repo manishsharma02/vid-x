@@ -85,17 +85,21 @@
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
     function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
     const CERTS=[{xp:500,icon:'🥉',name:'Beginner Certificate',level:'Debug Warrior'},{xp:2000,icon:'🥈',name:'Intermediate Certificate',level:'Code Samurai'},{xp:5000,icon:'🏆',name:'Master Certificate',level:'Legend'}];
+    const LEVEL_CERTS=[{level:'Beginner',icon:'🌱',name:'Beginner Level Completion'},{level:'Intermediate',icon:'⚡',name:'Intermediate Level Completion'},{level:'Advanced',icon:'🚀',name:'Advanced Level Completion'}];
     async function onDbReady(){
       const user=await requireAuth();if(!user)return;
       const profile=await getUserProfile(user.id);if(!profile)return;
       document.getElementById('sidebarAv').textContent=getInitials(profile.first_name,profile.last_name);
       document.getElementById('sidebarName').textContent=`${profile.first_name||''} ${profile.last_name||''}`.trim();
       const xp=profile.xp||0;
+      const studentLevel=getStudentLearningLevel(profile);
+      const progress=await getLevelProgress(user.id);
       const qualified=CERTS.filter(c=>xp>=c.xp);
       const nextCert=CERTS.find(c=>xp<c.xp);
+      const levelCert=LEVEL_CERTS.find(c=>c.level===studentLevel);
       document.getElementById('tiersGrid').innerHTML=CERTS.map(c=>`
         <div class="tier-card ${xp>=c.xp?'unlocked':'locked'}"><div class="tier-icon">${c.icon}</div><div class="tier-name">${c.name}</div><div class="tier-xp">${c.xp.toLocaleString()} XP required</div></div>
-      `).join('');
+      `).join('')+`<div class="tier-card unlocked" style="margin-top:1rem;grid-column:1/-1"><div class="tier-icon">${levelCert?.icon||'🎓'}</div><div class="tier-name">${levelCert?.name||'Learning Level'}</div><div class="tier-xp">Current level: ${studentLevel}${progress.next?` · ${progress.solves}/${progress.required} to ${progress.next}`:''}</div></div>`;
       if(qualified.length){
         const best=qualified[qualified.length-1];
         const fullName=`${profile.first_name||''} ${profile.last_name||''}`.trim();

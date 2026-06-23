@@ -207,7 +207,7 @@
       // Header
       renderAvatar('profileAv', profile.avatar_url, profile.first_name, profile.last_name, false);
       document.getElementById('profileName').textContent=name||'—';
-      document.getElementById('profileRank').textContent=profile.rank_title||'Newbie';
+      document.getElementById('profileRank').textContent=(profile.rank_title||'Newbie')+' · '+getStudentLearningLevel(profile);
       document.getElementById('joinDate').textContent='Joined '+formatDate(profile.created_at);
       document.getElementById('statXP').textContent=(profile.xp||0).toLocaleString();
       document.getElementById('statSolved').textContent=profile.problems_solved||0;

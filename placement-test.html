@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placement Test — VidX</title>
+  <link rel="stylesheet" href="animations.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-purple:#8b5cf6;--neon-cyan:#06b6d4;--neon-pink:#ec4899;--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);margin:0;padding:1.5rem}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+    .timer{font-family:'JetBrains Mono',monospace;color:var(--neon-cyan);font-weight:700}
+    .warn{background:rgba(236,72,153,.12);border:1px solid rgba(236,72,153,.3);padding:.75rem 1rem;border-radius:10px;margin-bottom:1rem;color:var(--neon-pink);display:none}
+    .warn.show{display:block}
+    .q-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem}
+    .btn{padding:.65rem 1.4rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--neon-purple),#3b82f6);color:#fff}
+    label{display:block;margin:.5rem 0;cursor:pointer}
+    textarea{width:100%;min-height:120px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:1rem;font-family:'JetBrains Mono',monospace}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div><strong id="testTitle">Placement Test</strong><div style="color:var(--muted);font-size:.85rem" id="testMeta"></div></div>
+    <div class="timer" id="timer">--:--</div>
+    <button class="btn" id="submitBtn" onclick="submitTest()">Submit Test</button>
+  </div>
+  <div class="warn" id="proctorWarn"></div>
+  <div id="questions"></div>
+  <script src="supabase.js"></script>
+  <script src="placement-proctor.js"></script>
+  <script>
+    const testId = new URLSearchParams(location.search).get('id');
+    let currentUser = null, test = null, attempt = null, proctor = null, timerId = null, answers = {};
+
+    async function onDbReady() {
+      currentUser = await requireAuth();
+      if (!currentUser || !testId) { location.href = 'placement.html'; return; }
+      test = await getPlacementTestById(testId);
+      if (!test || !test.is_published) { alert('Test not available'); location.href = 'placement.html'; return; }
+      const now = new Date();
+      if (now < new Date(test.start_time) || now > new Date(test.end_time)) {
+        alert('Test is not active right now'); location.href = 'placement.html'; return;
+      }
+      const profile = await getUserProfile(currentUser.id);
+      if (!isStudentEligibleForPlacement(profile, test)) {
+        alert('You are not eligible for this test'); location.href = 'placement.html'; return;
+      }
+      const start = await startPlacementAttempt(currentUser.id, testId);
+      if (!start.success) { alert(start.error); return; }
+      attempt = start.attempt;
+      document.getElementById('testTitle').textContent = test.title;
+      document.getElementById('testMeta').textContent = `${test.test_type} · ${test.proctoring_mode} monitoring · Violations: 0`;
+      renderQuestions();
+      startTimer(new Date(test.end_time));
+      proctor = new VidXProctor({
+        attemptId: attempt.id, testId, userId: currentUser.id,
+        mode: test.proctoring_mode, requireFullscreen: test.require_fullscreen,
+        onWarning: (msg, count, risk) => {
+          const el = document.getElementById('proctorWarn');
+          el.textContent = `⚠️ ${msg} (Violation #${count} · Risk ${risk})`;
+          el.classList.add('show');
+          document.getElementById('testMeta').textContent = `${test.test_type} · Risk ${risk} · Violations: ${count}`;
+        }
+      });
+      await proctor.start();
+    }
+
+    function renderQuestions() {
+      document.getElementById('questions').innerHTML = (test.questions || []).map((q, i) => {
+        if (q.question_type === 'mcq') {
+          const opts = (q.options || []).map(o => `<label><input type="radio" name="q_${q.id}" value="${o.key}" onchange="answers['${q.id}']=this.value"> ${o.key}. ${o.text}</label>`).join('');
+          return `<div class="q-card"><h3>Q${i + 1}. ${q.question_text}</h3>${opts}</div>`;
+        }
+        return `<div class="q-card"><h3>Q${i + 1}. ${q.question_text}</h3><textarea id="code_${q.id}" placeholder="Write code..." oninput="answers['${q.id}']={code:this.value}"></textarea><button class="btn" style="margin-top:.75rem" onclick="judgeCoding('${q.id}')">Run & Judge</button><div id="verdict_${q.id}" style="margin-top:.5rem;color:var(--muted)"></div></div>`;
+      }).join('') || '<p>No questions configured.</p>';
+    }
+
+    async function judgeCoding(qid) {
+      const q = test.questions.find(x => x.id === qid);
+      const code = document.getElementById('code_' + qid).value;
+      let problem = q.problem_id ? await getProblemById(q.problem_id) : null;
+      const cases = problem ? getProblemTestCases(problem) : [{ input: '', expected: '' }];
+      const judge = await judgeSubmission(q.coding_language || 'python', code, cases, 8000);
+      answers[qid] = { code, verdict: judge.verdict };
+      document.getElementById('verdict_' + qid).textContent = judge.verdict + ' · ' + judge.passed + '/' + judge.total;
+    }
+
+    function startTimer(endTime) {
+      function tick() {
+        const diff = endTime - new Date();
+        if (diff <= 0) { document.getElementById('timer').textContent = '00:00'; submitTest(); return; }
+        const m = Math.floor(diff / 60000), s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('timer').textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      }
+      tick();
+      timerId = setInterval(tick, 1000);
+    }
+
+    async function submitTest() {
+      if (timerId) clearInterval(timerId);
+      document.getElementById('submitBtn').disabled = true;
+      if (proctor) proctor.stop();
+      const summary = proctor ? proctor.summary() : { riskScore: 0, violationCount: 0 };
+      const r = await submitPlacementAttempt(attempt.id, answers, summary);
+      alert(r.success ? `Submitted! Score: ${r.score}/${r.maxScore} · Risk: ${r.risk}` : r.error);
+      location.href = 'placement.html';
+    }
+  </script>
+</body>
+</html>

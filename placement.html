@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placement Cell — VidX</title>
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <link rel="stylesheet" href="animations.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap');
+    :root{--bg:#03040a;--bg2:#080c14;--bg3:#0d1220;--neon-purple:#8b5cf6;--neon-cyan:#06b6d4;--neon-green:#10b981;--text:#f1f5f9;--muted:#64748b;--border:rgba(255,255,255,0.06);--border-glow:rgba(139,92,246,0.3);--sidebar-w:260px;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text)}
+    .layout{display:flex;min-height:100vh}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);padding:1.5rem 0;z-index:100}
+    .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-purple),#3b82f6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
+    .nav-section{padding:1rem 0}.nav-label{padding:0 1.5rem;font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+    .nav-item{display:block;padding:.7rem 1.5rem;color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem}
+    .nav-item:hover,.nav-item.active{color:var(--text);background:rgba(139,92,246,.08)}
+    .main{margin-left:var(--sidebar-w);flex:1;padding:2rem}
+    .hero-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+    .hero-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.25rem}
+    .hero-card strong{font-size:1.5rem;color:var(--neon-cyan);font-family:'JetBrains Mono',monospace}
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem}
+    .card h3{font-size:1.1rem;font-weight:800;margin-bottom:1rem}
+    .drive-row,.test-row{display:flex;justify-content:space-between;align-items:center;padding:1rem;border:1px solid var(--border);border-radius:12px;margin-bottom:.75rem;gap:1rem;flex-wrap:wrap}
+    .btn{padding:.55rem 1.2rem;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--neon-purple),#3b82f6);color:#fff;text-decoration:none;font-size:.85rem}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+    .readiness-bar{height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;margin-top:.5rem}
+    .readiness-fill{height:100%;background:linear-gradient(90deg,var(--neon-purple),var(--neon-green))}
+    @media(max-width:768px){.sidebar{display:none}.main{margin-left:0;padding:1rem}.hero-grid{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
+      <div class="nav-section"><div class="nav-label">Main</div>
+        <a href="dashboard.html" class="nav-item">🏠 Dashboard</a>
+        <a href="placement.html" class="nav-item active">🎯 Placement Cell</a>
+        <a href="leaderboard.html" class="nav-item">🏆 Leaderboard</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Account</div>
+        <a href="profile.html" class="nav-item">👤 Profile</a>
+        <a href="#" class="nav-item" onclick="logout();return false">🚪 Log Out</a>
+      </div>
+    </aside>
+    <div class="main">
+      <h1 style="font-size:1.8rem;font-weight:800;margin-bottom:1.5rem">🎯 Placement Dashboard</h1>
+      <div class="hero-grid" id="heroStats"></div>
+      <div class="card"><h3>📈 Placement Readiness</h3><div id="readinessBox">Calculating...</div></div>
+      <div class="card"><h3>🏢 Upcoming Drives</h3><div id="drivesList"></div></div>
+      <div class="card"><h3>📝 Upcoming Tests</h3><div id="testsList"></div></div>
+      <div class="card"><h3>✅ Applied Drives</h3><div id="appliedList"></div></div>
+      <div class="card"><h3>🏆 Placement Leaderboard</h3><div id="plLeaderboard"></div></div>
+    </div>
+  </div>
+  <script src="supabase.js"></script>
+  <script src="animations.js"></script>
+  <script>
+    let userId = null;
+    async function onDbReady() {
+      const user = await requireAuth();
+      if (!user) return;
+      userId = user.id;
+      const dash = await getStudentPlacementDashboard(userId);
+      const readiness = await computePlacementReadiness(userId);
+      if (!dash) return;
+
+      document.getElementById('heroStats').innerHTML = `
+        <div class="hero-card"><div>Placement Score</div><strong>${dash.placementScore}</strong></div>
+        <div class="hero-card"><div>Readiness</div><strong>${readiness.score}</strong></div>
+        <div class="hero-card"><div>Category</div><strong style="font-size:1rem">${readiness.category}</strong></div>
+        <div class="hero-card"><div>Learning Level</div><strong style="font-size:1rem">${getStudentLearningLevel(dash.profile)}</strong></div>`;
+
+      document.getElementById('readinessBox').innerHTML = `
+        <p style="color:var(--muted);margin-bottom:.5rem">${readiness.category} · Coding ${readiness.breakdown?.coding || 0} · Tests ${readiness.breakdown?.testPart || 0} · Activity ${(readiness.breakdown?.streakPart || 0) + (readiness.breakdown?.xpPart || 0)}</p>
+        <div class="readiness-bar"><div class="readiness-fill" style="width:${readiness.score}%"></div></div>`;
+
+      document.getElementById('drivesList').innerHTML = dash.upcomingDrives.length
+        ? dash.upcomingDrives.map(d => `<div class="drive-row"><div><strong>${d.title}</strong><div style="color:var(--muted);font-size:.85rem">${d.placement_companies?.name || 'Company TBA'} · ${d.drive_date ? new Date(d.drive_date).toLocaleDateString() : ''}</div></div><button class="btn" onclick="applyDrive('${d.id}')">Register</button></div>`).join('')
+        : '<p style="color:var(--muted)">No eligible drives right now.</p>';
+
+      document.getElementById('testsList').innerHTML = dash.upcomingTests.length
+        ? dash.upcomingTests.map(t => {
+          const active = new Date() >= new Date(t.start_time) && new Date() <= new Date(t.end_time);
+          return `<div class="test-row"><div><strong>${t.title}</strong><div style="color:var(--muted);font-size:.85rem">${t.test_type} · ${t.duration_mins} mins · ${t.proctoring_mode} proctoring</div></div>${active ? `<a class="btn" href="placement-test.html?id=${t.id}">Start Test</a>` : '<span style="color:var(--muted);font-size:.85rem">Not yet active</span>'}</div>`;
+        }).join('')
+        : '<p style="color:var(--muted)">No eligible tests scheduled.</p>';
+
+      document.getElementById('appliedList').innerHTML = dash.appliedDrives.length
+        ? dash.appliedDrives.map(d => `<div class="drive-row"><strong>${d.title}</strong><span style="color:var(--neon-green)">Registered</span></div>`).join('')
+        : '<p style="color:var(--muted)">You have not registered for any drives yet.</p>';
+
+      const lb = await getPlacementLeaderboard(10);
+      document.getElementById('plLeaderboard').innerHTML = lb.map((s, i) =>
+        `<div class="drive-row"><span>#${i + 1} ${s.first_name || ''} ${s.last_name || ''}</span><span>${s.branch || ''} · Y${s.year || ''}</span><strong>${s.placement_score || 0} pts</strong></div>`
+      ).join('') || '<p style="color:var(--muted)">No placement scores yet.</p>';
+    }
+
+    async function applyDrive(id) {
+      const r = await registerForDrive(userId, id);
+      alert(r.success ? 'Registered for drive!' : r.error);
+      if (r.success) onDbReady();
+    }
+  </script>
+</body>
+</html>

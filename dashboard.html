@@ -96,7 +96,7 @@
     .vote-bar{margin-top:.75rem}.vote-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;font-size:.8rem}
     .vote-bar-track{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;min-width:0}
     .vote-bar-fill{height:100%;background:linear-gradient(90deg,var(--neon-purple),var(--neon-cyan));border-radius:3px}
-    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999}
     .overlay.show{display:block}
  
     /* ── RESPONSIVE ── */
@@ -106,7 +106,7 @@
     }
     @media(max-width:768px){
       .sidebar{transform:translateX(-100%);z-index:1000}
-      .sidebar.open{transform:translateX(0)}
+      .sidebar.open{transform:translateX(0);z-index:1001}
       .main{margin-left:0}
       .mobile-topbar{display:flex}
       .topbar{display:none}
@@ -145,20 +145,23 @@
     <aside class="sidebar" id="sidebar">
       <a href="dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
       <div class="nav-section"><div class="nav-label">Main</div>
-        <a href="dashboard.html" class="nav-item active">🏠 Dashboard</a>
-        <a href="problems.html" class="nav-item">📚 Problem Library</a>
-        <a href="problem.html" class="nav-item">⚡ Daily Problem</a>
-        <a href="leaderboard.html" class="nav-item">🏆 Leaderboard</a>
-        <a href="sadhana.html" class="nav-item">🧘 Sadhana Mode</a>
+        <a href="dashboard.html" class="nav-item active" onclick="closeSidebar()">🏠 Dashboard</a>
+        <a href="problems.html" class="nav-item" onclick="closeSidebar()">📚 Problem Library</a>
+        <a href="problem.html" class="nav-item" onclick="closeSidebar()">⚡ Daily Problem</a>
+        <a href="leaderboard.html" class="nav-item" onclick="closeSidebar()">🏆 Leaderboard</a>
+        <a href="sadhana.html" class="nav-item" onclick="closeSidebar()">🧘 Sadhana Mode</a>
       </div>
       <div class="nav-section"><div class="nav-label">Community</div>
-        <a href="battles.html" class="nav-item">👥 Battles</a>
-        <a href="knowledge-hub.html" class="nav-item">🎓 Knowledge Hub</a>
-        <a href="discussions.html" class="nav-item">💬 Discussions</a>
+        <a href="battles.html" class="nav-item" onclick="closeSidebar()">👥 Battles</a>
+        <a href="knowledge-hub.html" class="nav-item" onclick="closeSidebar()">🎓 Knowledge Hub</a>
+        <a href="discussions.html" class="nav-item" onclick="closeSidebar()">💬 Discussions</a>
+      </div>
+      <div class="nav-section"><div class="nav-label">Placement</div>
+        <a href="placement.html" class="nav-item" onclick="closeSidebar()">🎯 Placement Cell</a>
       </div>
       <div class="nav-section"><div class="nav-label">Account</div>
-        <a href="profile.html" class="nav-item">👤 My Profile</a>
-        <a href="certificate.html" class="nav-item">📜 Certificates</a>
+        <a href="profile.html" class="nav-item" onclick="closeSidebar()">👤 My Profile</a>
+        <a href="certificate.html" class="nav-item" onclick="closeSidebar()">📜 Certificates</a>
         <a href="#" class="nav-item" onclick="logout();return false">🚪 Log Out</a>
       </div>
       <div class="sidebar-user">
@@ -205,6 +208,10 @@
             <div class="stat-card blue" data-aos="fade-up" data-aos-delay="50"><div class="stat-label">College Rank</div><div class="stat-value" id="statRank">—</div></div>
             <div class="stat-card green" data-aos="fade-up" data-aos-delay="100"><div class="stat-label">Problems Solved</div><div class="stat-value" id="statSolved">—</div></div>
             <div class="stat-card yellow" data-aos="fade-up" data-aos-delay="150"><div class="stat-label">Current Streak</div><div class="stat-value" id="statStreak">—</div></div>
+          </div>
+          <div class="card" data-aos="fade-up">
+            <div class="card-title" style="margin-bottom:1rem">🎓 Top Students by Learning Level</div>
+            <div id="levelLeaders"><p style="color:var(--muted);font-size:.85rem">Loading...</p></div>
           </div>
           <div class="card" data-aos="fade-up" id="challengeCard">
             <div class="card-header"><span class="card-title">⚡ Today's Challenge</span><span class="countdown-pill mono" id="challengeCountdown">--:--:--</span></div>
@@ -253,6 +260,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="animations.js"></script>
   <script>
+    // ── ADDED: Initialize AOS so cards are visible and not hidden ──
+    document.addEventListener('DOMContentLoaded', function(){
+      if(typeof AOS !== 'undefined'){
+        AOS.init({ once: true, duration: 500, offset: 0, disable: false });
+      }
+    });
+ 
     function toggleSidebar(){
       document.getElementById('sidebar').classList.toggle('open');
       document.getElementById('overlay').classList.toggle('show');
@@ -303,6 +317,13 @@
     async function onDbReady(){
       currentUser=await requireAuth();
       if(!currentUser)return;
+      document.getElementById('greeting').textContent=`${getGreeting()}, Coder 👋`;
+ 
+      // ── ADDED: Re-init AOS after DB is ready so elements render immediately ──
+      if(typeof AOS !== 'undefined'){
+        AOS.init({ once: true, duration: 500, offset: 0, disable: false });
+        AOS.refresh();
+      }
  
       const [prof,rankPos,challenge,leaderboard,notifs,todayVote]=await Promise.all([
         getUserProfile(currentUser.id),
@@ -331,6 +352,7 @@
       renderChallenge(challenge);
       loadHeatmap();
       renderMiniLeaderboard(leaderboard);
+      renderLevelLeaders();
       renderNotifications(notifs);
       renderWeeklyReport();
       renderVoting(todayVote);
@@ -379,6 +401,17 @@
       document.getElementById('miniLeaderboard').innerHTML=students.map((s,i)=>
         `<div class="mini-rank"><span class="mini-pos">#${i+1}</span><div class="mini-av">${getInitials(s.first_name,s.last_name)}</div><span class="mini-name">${s.first_name||s.email}</span><span class="mini-xp">${(s.xp||0).toLocaleString()}</span></div>`
       ).join('')||'<p style="color:var(--muted);font-size:.85rem">No data</p>';
+    }
+
+    async function renderLevelLeaders(){
+      const levels=['Beginner','Intermediate','Advanced'];
+      const blocks=await Promise.all(levels.map(async level=>{
+        const top=await getLeaderboardByLevel(level,1);
+        const leader=top[0];
+        const name=leader?`${leader.first_name||''} ${leader.last_name||''}`.trim()||leader.email:'—';
+        return `<div style="display:flex;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid var(--border);font-size:.85rem"><span><strong>${level}</strong> · ${name}</span><span class="mono" style="color:var(--neon-cyan)">${leader?(leader.xp||0).toLocaleString()+' XP':'—'}</span></div>`;
+      }));
+      document.getElementById('levelLeaders').innerHTML=blocks.join('');
     }
  
     function renderNotifications(notifs){

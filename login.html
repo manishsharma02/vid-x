@@ -1,5 +1,3 @@
-
-Login · HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -237,6 +235,7 @@ Login · HTML
       if(loginMode==='admin'){
         if(email===ADMIN_EMAIL&&password===ADMIN_PASS){
           sessionStorage.setItem('vidx_admin','true');
+          sessionStorage.setItem('vidx_placement','true');
           showAlert('Admin login successful! Redirecting...','success');
           setTimeout(()=>window.location.href='admin-dashboard.html',800);
         }else{

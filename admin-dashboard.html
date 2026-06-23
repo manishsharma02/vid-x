@@ -14,7 +14,7 @@
     .mono{font-family:'JetBrains Mono',monospace}
     ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--neon-red);border-radius:2px}
     .layout{display:flex;min-height:100vh}
-    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 0;z-index:100;overflow-y:auto;transition:transform .3s}
     .sidebar-logo{display:flex;align-items:center;gap:.6rem;padding:0 1.5rem 1.5rem;font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border)}
     .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-red),#f97316);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem}
     .admin-badge{padding:0 1.5rem;font-size:.8rem;color:var(--neon-red);font-weight:700;margin-top:.5rem}
@@ -23,7 +23,7 @@
     .nav-item:hover{color:var(--text);background:rgba(239,68,68,.05)}.nav-item.active{color:var(--text);border-left-color:var(--neon-red);background:rgba(239,68,68,.08)}
     .sidebar-user{margin-top:auto;padding:1rem 1.5rem;border-top:1px solid var(--border)}
     .main{margin-left:var(--sidebar-w);flex:1;padding:2rem}
-    .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border)}
+    .mobile-topbar{display:none;align-items:center;gap:1rem;padding:1rem;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
     .hamburger{background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
     .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem}
     .topbar h1{font-size:1.6rem;font-weight:800}
@@ -65,24 +65,36 @@
     .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999}.overlay.show{display:block}
     @media(max-width:900px){.stats-grid,.grid-2,.analytics-grid{grid-template-columns:1fr 1fr}}
     @media(max-width:600px){.analytics-grid{grid-template-columns:1fr}}
-    @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform .3s;z-index:1000}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:1rem}.mobile-topbar{display:flex}.stats-grid{grid-template-columns:1fr}.vote-panel{right:1rem;left:1rem;width:auto}}
+    @media(max-width:768px){
+      .sidebar{transform:translateX(-100%);z-index:1000}
+      .sidebar.open{transform:translateX(0)}
+      .main{margin-left:0;padding:1rem}
+      .mobile-topbar{display:flex}
+      .stats-grid{grid-template-columns:1fr 1fr}
+      .vote-panel{right:1rem;left:1rem;width:auto}
+    }
+    @media(max-width:480px){
+      .stats-grid{grid-template-columns:1fr}
+      .grid-2{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
   <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
   <div class="layout">
     <aside class="sidebar" id="sidebar">
-      <a href="admin-dashboard.html" class="sidebar-logo"><div class="logo-icon">VX</div>VidX</a>
+      <a href="admin-dashboard.html" class="sidebar-logo" onclick="closeSidebar()"><div class="logo-icon">VX</div>VidX</a>
       <div class="admin-badge">🔴 Admin Panel</div>
       <div class="nav-section"><div class="nav-label">Control</div>
-        <a href="admin-dashboard.html" class="nav-item active">📊 Dashboard</a>
-        <a href="admin-problems.html" class="nav-item">📝 Manage Problems</a>
-        <a href="admin-students.html" class="nav-item">👥 Manage Students</a>
-        <a href="admin-leaderboard.html" class="nav-item">🏆 Manage Leaderboard</a>
+        <a href="admin-dashboard.html" class="nav-item active" onclick="closeSidebar()">📊 Dashboard</a>
+        <a href="admin-problems.html" class="nav-item" onclick="closeSidebar()">📝 Manage Problems</a>
+        <a href="admin-students.html" class="nav-item" onclick="closeSidebar()">👥 Manage Students</a>
+        <a href="admin-leaderboard.html" class="nav-item" onclick="closeSidebar()">🏆 Manage Leaderboard</a>
+        <a href="admin-placement.html" class="nav-item" onclick="closeSidebar()">🎯 Placement Cell</a>
       </div>
       <div class="nav-section"><div class="nav-label">View</div>
-        <a href="index.html" class="nav-item">🌐 View Student Site</a>
-        <a href="dashboard.html" class="nav-item">👁 Preview Dashboard</a>
+        <a href="index.html" class="nav-item" onclick="closeSidebar()">🌐 View Student Site</a>
+        <a href="dashboard.html" class="nav-item" onclick="closeSidebar()">👁 Preview Dashboard</a>
       </div>
       <div class="sidebar-user"><div style="font-weight:700">AD Admin</div><div style="font-size:.8rem;color:var(--neon-red)">Super Admin</div></div>
     </aside>
@@ -106,6 +118,7 @@
         <div class="stat-card purple"><div class="stat-label">Active Streaks</div><div class="stat-value" id="statStreaks">—</div></div>
       </div>
       <div class="actions" data-aos="fade-up">
+        <a href="admin-battles.html" class="nav-item" onclick="closeSidebar()">⚔️ Manage Battles</a>
         <a href="admin-problems.html" class="btn btn-red">Add Problem</a>
         <a href="admin-students.html" class="btn btn-ghost">View Students</a>
         <a href="admin-leaderboard.html" class="btn btn-ghost">Edit Ranks</a>
@@ -116,7 +129,7 @@
         <div class="card"><div class="card-title">Recent Problems</div><div id="recentProblems"><p style="color:var(--muted);font-size:.85rem">Loading...</p></div></div>
       </div>
       <div class="card" data-aos="fade-up"><div class="card-title">Live Activity Feed</div><div id="activityFeed"><p style="color:var(--muted);font-size:.85rem">Loading...</p></div></div>
-
+ 
       <div class="card" data-aos="fade-up" style="margin-top:1.5rem">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem">
           <div class="card-title" style="margin:0">🗳️ Voting Analytics</div>
@@ -154,20 +167,38 @@
   </div>
   <script src="supabase.js"></script>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="animations.js"></script>
   <script>
-function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
-    function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+    // ── ADDED: AOS initialize on DOM ready ──
+    document.addEventListener('DOMContentLoaded', function(){
+      if(typeof AOS !== 'undefined'){
+        AOS.init({ once: true, duration: 500, offset: 0 });
+      }
+    });
+ 
+    function toggleSidebar(){
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('overlay').classList.toggle('show');
+    }
+    function closeSidebar(){
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('overlay').classList.remove('show');
+    }
+ 
     let allVotesCache=[];
+ 
     function onDbReady(){
       if(!requireAdmin())return;
+      // ── ADDED: AOS refresh after DB ready ──
+      if(typeof AOS !== 'undefined'){ AOS.init({ once: true, duration: 500, offset: 0 }); AOS.refresh(); }
       loadDashboard();
       loadVoteNotifications();
       loadVotingAnalytics();
       setInterval(()=>{loadVoteNotifications();loadVotingAnalytics();},30000);
     }
+ 
     async function loadDashboard(){
       const students=await adminGetAllStudents();
       const problems=await getAllProblems();
@@ -194,6 +225,7 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
         }).join('')||'<p style="color:var(--muted)">No activity</p>';
       }catch(e){}
     }
+ 
     async function loadVoteNotifications(){
       const notifs=await getVoteNotifications();
       const unread=notifs.filter(n=>!n.is_read).length;
@@ -203,39 +235,41 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
         `<div class="vote-item ${n.is_read?'':'unread'}"><strong>${n.student_name||'Student'}</strong> voted for <strong>${n.topic}</strong><div style="font-size:.75rem;color:var(--muted)">${n.student_email||''} · ${formatDate(n.voted_at)}</div></div>`
       ).join(''):'<p style="color:var(--muted);font-size:.85rem">No votes yet</p>';
     }
+ 
     function toggleVotePanel(){document.getElementById('votePanel').classList.toggle('show');}
     async function markAllRead(){await markVoteNotificationsRead();loadVoteNotifications();}
+ 
     async function loadVotingAnalytics(){
       const dateF=document.getElementById('voteDateFilter').value;
       const topicF=document.getElementById('voteTopicFilter').value;
       const analytics=await getVoteAnalytics();
       allVotesCache=await getAllVotes({date:dateF||null,topic:topicF||null});
-
+ 
       document.getElementById('totalVotes').innerHTML=`Total votes: <strong>${analytics.totalVotes}</strong>`;
       document.getElementById('mostVoted').innerHTML=analytics.mostVoted?`Most voted: <strong>${analytics.mostVoted[0]}</strong> (${analytics.mostVoted[1]} votes)`:'Most voted: <strong>—</strong>';
       document.getElementById('leastVoted').innerHTML=analytics.leastVoted?`Least voted: <strong>${analytics.leastVoted[0]}</strong> (${analytics.leastVoted[1]} votes)`:'Least voted: <strong>—</strong>';
-
+ 
       const maxCount=analytics.leaderboard.length?analytics.leaderboard[0][1]:1;
       document.getElementById('voteLeaderboard').innerHTML=analytics.leaderboard.length?analytics.leaderboard.map(([t,c])=>
         `<div class="chart-bar-row"><span style="width:90px;font-weight:700">${t}</span><div class="chart-bar-track"><div class="chart-bar-fill" style="width:${Math.round((c/maxCount)*100)}%"></div></div><span class="chart-bar-count">${c}</span></div>`
       ).join(''):'<p style="color:var(--muted);font-size:.85rem">No votes yet</p>';
-
+ 
       document.getElementById('topicChart').innerHTML=analytics.leaderboard.length?analytics.leaderboard.map(([t,c])=>
         `<div class="chart-bar-row"><span style="width:100px">${t}</span><div class="chart-bar-track"><div class="chart-bar-fill" style="width:${Math.round((c/maxCount)*100)}%"></div></div><span class="chart-bar-count">${c} Votes</span></div>`
       ).join(''):'<p style="color:var(--muted)">No data</p>';
-
+ 
       const dailyEntries=Object.entries(analytics.dailyCounts).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
       const maxDaily=dailyEntries.length?Math.max(...dailyEntries.map(e=>e[1])):1;
       document.getElementById('dailyChart').innerHTML=dailyEntries.length?dailyEntries.map(([d,c])=>
         `<div class="chart-bar-row"><span style="width:90px;font-size:.8rem">${d}</span><div class="chart-bar-track"><div class="chart-bar-fill" style="width:${Math.round((c/maxDaily)*100)}%;background:linear-gradient(90deg,var(--neon-blue),var(--neon-cyan))"></div></div><span class="chart-bar-count">${c}</span></div>`
       ).join(''):'<p style="color:var(--muted)">No daily data</p>';
-
+ 
       document.getElementById('votesTableBody').innerHTML=allVotesCache.length?allVotesCache.map(v=>{
         const dt=new Date(v.vote_date||v.created_at);
         return `<tr><td>${v.student_name||'—'}</td><td>${v.student_email||'—'}</td><td><strong>${v.vote_for}</strong></td><td>${v.vote_date||formatDate(v.created_at)}</td><td class="mono">${dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</td></tr>`;
       }).join(''):'<tr><td colspan="5" style="color:var(--muted)">No votes match filters</td></tr>';
     }
-
+ 
     function exportVotesCSV(){
       const headers=['Student Name','Email','Topic','Date'];
       const rows=allVotesCache.map(v=>[v.student_name,v.student_email,v.vote_for,v.vote_date]);
@@ -243,7 +277,7 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
       const blob=new Blob([csv],{type:'text/csv'});
       const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vidx-votes.csv';a.click();
     }
-
+ 
     async function sendNotif(){
       const title=prompt('Notification title:','Admin Notice');if(title===null)return;
       const msg=prompt('Enter notification message for all students:');if(!msg)return;

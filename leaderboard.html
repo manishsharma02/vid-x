@@ -85,9 +85,9 @@
       <div class="your-rank-bar" data-aos="fade-up" id="yourRankBar">Loading your rank...</div>
       <div class="filters" data-aos="fade-up">
         <button class="filter-btn active" onclick="filterBoard('all',this)">All</button>
-        <button class="filter-btn" onclick="filterBoard('newbie',this)">Newbie</button>
-        <button class="filter-btn" onclick="filterBoard('intermediate',this)">Intermediate</button>
-        <button class="filter-btn" onclick="filterBoard('advanced',this)">Advanced</button>
+        <button class="filter-btn" onclick="filterBoard('Beginner',this)">Beginner</button>
+        <button class="filter-btn" onclick="filterBoard('Intermediate',this)">Intermediate</button>
+        <button class="filter-btn" onclick="filterBoard('Advanced',this)">Advanced</button>
       </div>
       <div class="podium" id="podium" data-aos="fade-up"></div>
       <div class="table-wrap" data-aos="fade-up">
@@ -119,7 +119,7 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
     }
     function getFiltered(){
       if(currentFilter==='all')return allStudents;
-      return allStudents.filter(s=>(s.experience_level||'newbie')===currentFilter);
+      return allStudents.filter(s=>getStudentLearningLevel(s)===currentFilter);
     }
     function renderBoard(){
       const students=getFiltered();

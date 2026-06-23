@@ -49,6 +49,8 @@
     .btn-answer{padding:.5rem 1rem;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);border-radius:8px;color:var(--neon-cyan);font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer}
     .paste-check{font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:.4rem}
     .btn-run:disabled,.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+    .level-lock-banner{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.35);border-radius:12px;padding:1rem;margin-bottom:1rem;color:#f59e0b;font-size:.9rem}
+    .level-lock-banner strong{color:var(--text)}
     .code-area{flex:1;display:flex;flex-direction:column}
     #codeEditor{flex:1;width:100%;padding:1rem;background:var(--bg3);border:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.9rem;line-height:1.6;resize:none;outline:none;tab-size:4}
     .output-panel{height:180px;border-top:1px solid var(--border);background:var(--bg2);padding:1rem;overflow-y:auto}
@@ -81,6 +83,7 @@
           </div>
         </div>
         <div class="stats-row" id="statsRow">Loading stats...</div>
+        <div id="levelLockBanner" style="display:none"></div>
         <div class="tabs" id="tabBar">
           <button class="tab active" data-tab="problem">📄 Problem</button>
           <button class="tab" data-tab="hint">💡 Hint</button>
@@ -139,14 +142,16 @@
       cpp:'#include <iostream>\nusing namespace std;\n\nint main() {\n    return 0;\n}',
       javascript:'const fs=require("fs");\nconst input=fs.readFileSync(0,"utf8").trim();\n'
     };
-    let currentUser=null,problem=null,stats=null,related=[],bookmarked=false,liked=false,startTime=Date.now(),activeTab='problem',_submitStartTime=0;
- 
+    let currentUser=null,problem=null,stats=null,related=[],bookmarked=false,liked=false,startTime=Date.now(),activeTab='problem',_submitStartTime=0,userProfile=null,submissionLocked=false;
+
     async function onDbReady(){
       currentUser=await requireAuth();if(!currentUser)return;
+      userProfile=await getUserProfile(currentUser.id);
       const params=new URLSearchParams(window.location.search);
       const id=params.get('id');
       problem=id?await getProblemById(id):await getDailyProblem();
       if(!problem){document.getElementById('leftContent').innerHTML='<p style="color:var(--neon-pink)">No problem found.</p>';return;}
+      applyLevelLock();
       document.title=problem.title+' — VidX';
       [_allCache,stats,related]=await Promise.all([getAllProblems(),getProblemStats(problem.id),getRelatedProblems(problem)]);
       const [bm,lk]=await Promise.all([getBookmarkedProblems(currentUser.id),getLikedProblems(currentUser.id)]);
@@ -200,6 +205,23 @@
     }
  
     let _allCache=[];
+    function applyLevelLock(){
+      if(!userProfile||!problem)return;
+      const info=getLevelUnlockMessage(userProfile,problem);
+      submissionLocked=info.locked;
+      const banner=document.getElementById('levelLockBanner');
+      if(info.locked){
+        banner.style.display='block';
+        banner.className='level-lock-banner';
+        banner.innerHTML='<strong>🔒 Level Locked</strong><br>'+info.message+'<br><span style="color:var(--muted);font-size:.85rem">You can read the problem but cannot submit until you unlock this level.</span>';
+        document.getElementById('runBtn').disabled=true;
+        document.getElementById('submitBtn').disabled=true;
+        document.querySelector('.btn-answer').disabled=true;
+      }else{
+        banner.style.display='none';
+      }
+    }
+
     function allProblemsCache(){return _allCache;}
     function loadTemplate(){document.getElementById('codeEditor').value=TEMPLATES[document.getElementById('langSelect').value];}
  
@@ -312,6 +334,7 @@
     }
  
     async function submitCode(){
+      if(submissionLocked){alert(getLevelUnlockMessage(userProfile,problem).message);return;}
       var btn=document.getElementById('submitBtn'),out=document.getElementById('output'),meta=document.getElementById('outputMeta');
       btn.disabled=true;out.textContent='Judging...';out.className='output-text';meta.textContent='';
       var submitStartTime=Date.now();
@@ -328,6 +351,7 @@
         if(judge.verdict==='Accepted'){
           showResult('🎉','Accepted!',res);
           out.textContent='✅ All '+judge.total+' test cases passed!';out.className='output-text success';
+          if(res.levelPromotion&&res.levelPromotion.promoted){meta.textContent='Level up! You are now '+res.levelPromotion.level;}
         }else{
           var msg=judge.verdict;
           if(judge.failedCase){var fc=judge.failedCase;if(fc.expected)msg+='\nTest #'+fc.index+'\nExpected: '+fc.expected+'\nGot: '+(fc.actual||'(empty)');else if(fc.stderr)msg+='\n'+fc.stderr;else if(fc.error)msg+='\n'+fc.error;}

@@ -1,8 +1,8 @@
 // supabase.js — load this BEFORE any inline script on every page
-
+ 
 const SUPABASE_URL = 'https://kmyieimynwedgrpmrgmu.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtteWllaW15bndlZGdycG1yZ211Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNTg2NzYsImV4cCI6MjA5NDkzNDY3Nn0.CJ1JMRSYcJGhbrztlHHWP4wIf7MIOwmUEyu8fwhEVv0';
-
+ 
 // Load Supabase SDK dynamically
 const script = document.createElement('script');
 script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
@@ -15,9 +15,9 @@ script.onload = () => {
   if (typeof loadVoteNotifications === 'function') loadVoteNotifications();
 };
 document.head.appendChild(script);
-
+ 
 // ─── AUTH ───────────────────────────────────────────────────────────────────
-
+ 
 async function getCurrentUser() {
   try {
     const { data } = await window.db.auth.getUser();
@@ -27,7 +27,7 @@ async function getCurrentUser() {
     return null;
   }
 }
-
+ 
 async function getUserProfile(id) {
   try {
     const { data, error } = await window.db
@@ -42,9 +42,9 @@ async function getUserProfile(id) {
     return null;
   }
 }
-
+ 
 // ─── REGISTER ───────────────────────────────────────────────────────────────
-
+ 
 async function registerStudent(email, password, userData) {
   try {
     const { data: authData, error: authError } = await window.db.auth.signUp({
@@ -52,10 +52,10 @@ async function registerStudent(email, password, userData) {
       password
     });
     if (authError) throw authError;
-
+ 
     const userId = authData.user?.id;
     if (!userId) throw new Error('Registration failed — no user ID returned.');
-
+ 
     const profile = {
       id: userId,
       email,
@@ -65,24 +65,25 @@ async function registerStudent(email, password, userData) {
       branch: userData.branch || '',
       year: userData.year || '',
       experience_level: userData.experience_level || 'newbie',
+      learning_level: mapExperienceToLearningLevel(userData.experience_level),
       xp: 0,
       streak: 0,
       problems_solved: 0,
       rank_title: 'Newbie'
     };
-
+ 
     const { error: insertError } = await window.db.from('users').insert(profile);
     if (insertError) throw insertError;
-
+ 
     return { success: true, user: authData.user };
   } catch (e) {
     console.error('registerStudent:', e);
     return { success: false, error: e.message || 'Registration failed.' };
   }
 }
-
+ 
 // ─── LOGIN ──────────────────────────────────────────────────────────────────
-
+ 
 async function loginStudent(email, password) {
   try {
     const { data, error } = await window.db.auth.signInWithPassword({ email, password });
@@ -93,22 +94,22 @@ async function loginStudent(email, password) {
     return { success: false, error: e.message || 'Login failed.' };
   }
 }
-
+ 
 // ─── PROBLEMS ───────────────────────────────────────────────────────────────
-
+ 
 async function getDailyProblem() {
   try {
     const today = new Date().toISOString().split('T')[0];
-
+ 
     const { data: todayProblem } = await window.db
       .from('problems')
       .select('*')
       .eq('is_daily', true)
       .eq('daily_date', today)
       .maybeSingle();
-
+ 
     if (todayProblem) return todayProblem;
-
+ 
     const { data: anyDaily } = await window.db
       .from('problems')
       .select('*')
@@ -116,23 +117,23 @@ async function getDailyProblem() {
       .order('daily_date', { ascending: false })
       .limit(1)
       .maybeSingle();
-
+ 
     if (anyDaily) return anyDaily;
-
+ 
     const { data: latest } = await window.db
       .from('problems')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-
+ 
     return latest || null;
   } catch (e) {
     console.error('getDailyProblem:', e);
     return null;
   }
 }
-
+ 
 async function getAllProblems() {
   try {
     const { data, error } = await window.db
@@ -146,7 +147,7 @@ async function getAllProblems() {
     return [];
   }
 }
-
+ 
 async function getProblemById(id) {
   try {
     const { data, error } = await window.db
@@ -161,12 +162,12 @@ async function getProblemById(id) {
     return null;
   }
 }
-
+ 
 function isSchemaOrRlsError(err) {
   const msg = (err?.message || err?.code || '').toString().toLowerCase();
   return msg.includes('schema cache') || msg.includes('column') || msg.includes('row-level security') || msg.includes('pgrst');
 }
-
+ 
 function buildProblemInsertPayload(data, tier) {
   const core = {
     title: data.title,
@@ -191,11 +192,11 @@ function buildProblemInsertPayload(data, tier) {
   }
   return core;
 }
-
+ 
 async function insertProblem(problemData) {
   try {
     console.log('[VidX] insertProblem payload:', problemData);
-
+ 
     if (problemData.is_daily) {
       try {
         await window.db.from('problems').update({ is_daily: false }).eq('is_daily', true);
@@ -203,7 +204,7 @@ async function insertProblem(problemData) {
         console.warn('[VidX] clear daily flag:', e);
       }
     }
-
+ 
     let lastError = null;
     for (let tier = 2; tier >= 0; tier--) {
       const payload = buildProblemInsertPayload(problemData, tier);
@@ -216,21 +217,21 @@ async function insertProblem(problemData) {
       console.warn('[VidX] insertProblem tier', tier, 'failed:', error.message);
       if (!isSchemaOrRlsError(error)) throw error;
     }
-
+ 
     throw lastError || new Error('Could not insert problem. Run schema-upgrade.sql in Supabase SQL Editor.');
   } catch (e) {
     console.error('insertProblem:', e);
     throw e;
   }
 }
-
+ 
 // ─── LEADERBOARD ────────────────────────────────────────────────────────────
-
+ 
 async function getLeaderboard(limit = 50) {
   try {
     const { data, error } = await window.db
       .from('users')
-      .select('id, first_name, last_name, email, college, branch, year, xp, streak, problems_solved, rank_title, experience_level')
+      .select('id, first_name, last_name, email, college, branch, year, xp, streak, problems_solved, rank_title, experience_level, learning_level, placement_score, placement_readiness')
       .order('xp', { ascending: false })
       .limit(limit);
     if (error) throw error;
@@ -240,7 +241,7 @@ async function getLeaderboard(limit = 50) {
     return [];
   }
 }
-
+ 
 async function getUserRank(userId) {
   try {
     const leaderboard = await getLeaderboard(1000);
@@ -251,29 +252,29 @@ async function getUserRank(userId) {
     return null;
   }
 }
-
+ 
 // ─── XP + STREAK ────────────────────────────────────────────────────────────
-
+ 
 function getRankTitle(xp) {
   if (xp >= 5000) return 'Legend';
   if (xp >= 2000) return 'Code Samurai';
   if (xp >= 500) return 'Debug Warrior';
   return 'Newbie';
 }
-
+ 
 async function giveXP(userId, amount) {
   try {
     const profile = await getUserProfile(userId);
     if (!profile) throw new Error('User not found');
-
+ 
     const newXP = (profile.xp || 0) + amount;
     const rankTitle = getRankTitle(newXP);
-
+ 
     const { error } = await window.db
       .from('users')
       .update({ xp: newXP, rank_title: rankTitle })
       .eq('id', userId);
-
+ 
     if (error) throw error;
     return { newXP, rankTitle };
   } catch (e) {
@@ -281,58 +282,83 @@ async function giveXP(userId, amount) {
     return null;
   }
 }
-
+ 
 async function updateStreak(userId) {
   try {
     const profile = await getUserProfile(userId);
     if (!profile) throw new Error('User not found');
-
+ 
     const today = new Date().toISOString().split('T')[0];
     const lastSolved = profile.last_solved_date;
     let newStreak = profile.streak || 0;
     let streakBonus = 0;
-
+ 
     if (lastSolved === today) {
       return { streak: newStreak, streakBonus: 0 };
     }
-
+ 
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
-
+ 
     if (lastSolved === yesterdayStr) {
       newStreak += 1;
     } else {
       newStreak = 1;
     }
-
+ 
     if (newStreak === 7) streakBonus = 25;
     if (newStreak === 30) streakBonus = 100;
-
+ 
     const { error } = await window.db
       .from('users')
       .update({ streak: newStreak, last_solved_date: today })
       .eq('id', userId);
-
+ 
     if (error) throw error;
-
+ 
     if (streakBonus > 0) await giveXP(userId, streakBonus);
-
+ 
     return { streak: newStreak, streakBonus };
   } catch (e) {
     console.error('updateStreak:', e);
     return { streak: null, streakBonus: 0 };
   }
 }
-
+ 
 // ─── SUBMIT ─────────────────────────────────────────────────────────────────
-
-const XP_BASE_ACCEPTED = 50;
-const XP_FIRST_SOLVER = 100;
-const XP_TOP5_BONUS = 25;
+ 
+// ── XP DECAY SYSTEM ─────────────────────────────────────────────────────────
+// Rules:
+//   - 1st solver  → full xp_reward (from problem, e.g. 100)
+//   - 2nd solver  → xp_reward - 5
+//   - 3rd solver  → xp_reward - 10
+//   - Nth solver  → xp_reward - (N-1)*5
+//   - Floor       → 20% of xp_reward (minimum, so no one gets near 0)
+//   - Wrong/Ans   → unchanged (3 XP wrong, 1 XP answer-only)
+// ─────────────────────────────────────────────────────────────────────────────
+ 
 const XP_WRONG = 3;
 const XP_ANSWER_ONLY = 1;
-
+const XP_DECAY_PER_POSITION = 5;   // XP drops by 5 each position
+const XP_FLOOR_PERCENT = 0.20;     // minimum = 20% of problem's xp_reward
+ 
+function calculateSubmissionXP(verdict, position, submissionMode, xpReward) {
+  // Wrong answer or answer-only — fixed small XP, no change
+  if (verdict === 'Answer Only') return XP_ANSWER_ONLY;
+  if (verdict !== 'Accepted') return XP_WRONG;
+ 
+  // Non-code submissions (answer only mode) get base
+  if (submissionMode !== 'code') return Math.round(xpReward * XP_FLOOR_PERCENT) || 10;
+ 
+  // Decay: each position after 1st loses 5 XP
+  const decay = (position - 1) * XP_DECAY_PER_POSITION;
+  const floor = Math.max(1, Math.round(xpReward * XP_FLOOR_PERCENT));
+  const earned = Math.max(floor, xpReward - decay);
+ 
+  return earned;
+}
+ 
 async function getAcceptedSolvePosition(problemId) {
   try {
     const { count } = await window.db
@@ -345,7 +371,7 @@ async function getAcceptedSolvePosition(problemId) {
     return 1;
   }
 }
-
+ 
 async function hasUserSolvedProblem(userId, problemId) {
   try {
     const { data } = await window.db
@@ -360,22 +386,7 @@ async function hasUserSolvedProblem(userId, problemId) {
     return false;
   }
 }
-
-function calculateSubmissionXP(verdict, position, submissionMode) {
-  if (verdict === 'Answer Only') return XP_ANSWER_ONLY;
-  if (verdict !== 'Accepted') return XP_WRONG;
-
-  let xp = XP_BASE_ACCEPTED;
-  const isCode = submissionMode === 'code';
-
-  if (isCode) {
-    if (position === 1) xp += XP_FIRST_SOLVER;
-    else if (position >= 2 && position <= 5) xp += XP_TOP5_BONUS;
-  }
-
-  return xp;
-}
-
+ 
 async function submitSolution(userId, problemId, options = {}) {
   try {
     const {
@@ -390,30 +401,33 @@ async function submitSolution(userId, problemId, options = {}) {
     } = typeof options === 'string'
       ? { verdict: options === 'correct' ? 'Accepted' : 'Wrong Answer', language: arguments[3], timeTaken: arguments[4] }
       : options;
-
+ 
     const isAccepted = verdict === 'Accepted';
     let xpGained = 0;
     let position = null;
     let streakBonus = 0;
     const alreadySolved = await hasUserSolvedProblem(userId, problemId);
-
+ 
+    // Fetch problem to get its xp_reward for the decay formula
+    const problem = await getProblemById(problemId);
+    const xpReward = problem?.xp_reward || 100;
+ 
     if (isAccepted) {
       position = await getAcceptedSolvePosition(problemId);
-      xpGained = calculateSubmissionXP(verdict, position, submissionMode);
-
+      xpGained = calculateSubmissionXP(verdict, position, submissionMode, xpReward);
+ 
       await giveXP(userId, xpGained);
       const streakResult = await updateStreak(userId);
       streakBonus = streakResult?.streakBonus || 0;
       xpGained += streakBonus;
-
+ 
       if (!alreadySolved) {
         const profile = await getUserProfile(userId);
         await window.db
           .from('users')
           .update({ problems_solved: (profile?.problems_solved || 0) + 1 })
           .eq('id', userId);
-
-        const problem = await getProblemById(problemId);
+ 
         await window.db
           .from('problems')
           .update({
@@ -429,7 +443,7 @@ async function submitSolution(userId, problemId, options = {}) {
       xpGained = XP_WRONG;
       await giveXP(userId, xpGained);
     }
-
+ 
     const row = {
       user_id: userId,
       problem_id: problemId,
@@ -443,11 +457,9 @@ async function submitSolution(userId, problemId, options = {}) {
       total_cases: totalCases,
       runtime_ms: runtimeMs
     };
-
-    let insertError = null;
+ 
     const { error } = await window.db.from('submissions').insert(row);
     if (error) {
-      insertError = error;
       const { error: fallbackErr } = await window.db.from('submissions').insert({
         user_id: userId,
         problem_id: problemId,
@@ -459,6 +471,11 @@ async function submitSolution(userId, problemId, options = {}) {
       if (fallbackErr) throw fallbackErr;
     }
 
+    let levelPromotion = null;
+    if (isAccepted) {
+      levelPromotion = await checkAndPromoteLearningLevel(userId);
+    }
+
     return {
       xpGained,
       position,
@@ -468,22 +485,23 @@ async function submitSolution(userId, problemId, options = {}) {
       passedCases,
       totalCases,
       runtimeMs,
-      alreadySolved
+      alreadySolved,
+      levelPromotion
     };
   } catch (e) {
     console.error('submitSolution:', e);
     return { xpGained: 0, position: null, isWrong: true, error: e.message };
   }
 }
-
+ 
 // ─── NOTIFICATIONS ──────────────────────────────────────────────────────────
-
+ 
 function getNotificationTitle(n) {
   if (n.title) return n.title;
   const types = { admin: '📢 Admin Notice', system: '⚙️ System', vote: '🗳️ Vote Update', xp: '⭐ XP Update' };
   return types[n.type] || '📬 Notification';
 }
-
+ 
 async function getNotifications(userId, limit = 50) {
   try {
     const { data, error } = await window.db
@@ -499,7 +517,7 @@ async function getNotifications(userId, limit = 50) {
     return [];
   }
 }
-
+ 
 async function getUnreadNotificationCount(userId) {
   try {
     const { count, error } = await window.db
@@ -514,7 +532,7 @@ async function getUnreadNotificationCount(userId) {
     return 0;
   }
 }
-
+ 
 async function markNotificationRead(id) {
   try {
     const { error } = await window.db
@@ -528,7 +546,7 @@ async function markNotificationRead(id) {
     return false;
   }
 }
-
+ 
 async function markAllNotificationsRead(userId) {
   try {
     const { error } = await window.db
@@ -543,12 +561,12 @@ async function markAllNotificationsRead(userId) {
     return false;
   }
 }
-
+ 
 async function sendNotificationToAll(message, title = 'Admin Notice') {
   try {
     const students = await adminGetAllStudents();
     if (!students.length) return { success: false, error: 'No students found.' };
-
+ 
     const withTitle = students.map(s => ({
       user_id: s.id,
       title,
@@ -562,16 +580,16 @@ async function sendNotificationToAll(message, title = 'Admin Notice') {
       type: 'admin',
       is_read: false
     }));
-
+ 
     const attempts = [withTitle, withoutTitle];
     let lastError = null;
-
+ 
     for (const rows of attempts) {
       const { error } = await window.db.from('notifications').insert(rows);
       if (!error) return { success: true, count: rows.length };
       lastError = error;
       console.warn('[VidX] batch notification insert failed:', error.message);
-
+ 
       if (isSchemaOrRlsError(error)) {
         let sent = 0;
         for (const row of rows) {
@@ -584,7 +602,7 @@ async function sendNotificationToAll(message, title = 'Admin Notice') {
         throw error;
       }
     }
-
+ 
     const hint = isSchemaOrRlsError(lastError)
       ? ' Run schema-upgrade.sql in Supabase SQL Editor to fix RLS policies.'
       : '';
@@ -595,9 +613,9 @@ async function sendNotificationToAll(message, title = 'Admin Notice') {
     return { success: false, error: (e.message || 'Insert failed.') + hint };
   }
 }
-
+ 
 // ─── VOTING ─────────────────────────────────────────────────────────────────
-
+ 
 async function getTodayVote(userId) {
   try {
     const today = new Date().toISOString().split('T')[0];
@@ -613,21 +631,21 @@ async function getTodayVote(userId) {
     return null;
   }
 }
-
+ 
 async function submitVote(userId, voteFor, studentName, studentEmail) {
   try {
     const existing = await getTodayVote(userId);
     if (existing) return { success: false, error: 'You already voted today.' };
-
+ 
     const today = new Date().toISOString().split('T')[0];
-
+ 
     const { error: voteError } = await window.db.from('problem_votes').insert({
       user_id: userId,
       vote_for: voteFor,
       vote_date: today
     });
     if (voteError) throw voteError;
-
+ 
     await window.db.from('vote_notifications').insert({
       student_id: userId,
       student_name: studentName,
@@ -635,21 +653,21 @@ async function submitVote(userId, voteFor, studentName, studentEmail) {
       topic: voteFor,
       is_read: false
     });
-
+ 
     return { success: true };
   } catch (e) {
     console.error('submitVote:', e);
     return { success: false, error: e.message };
   }
 }
-
+ 
 async function getVoteCounts(dateFilter = null) {
   try {
     let query = window.db.from('problem_votes').select('vote_for, vote_date');
     if (dateFilter) query = query.eq('vote_date', dateFilter);
     const { data, error } = await query;
     if (error) throw error;
-
+ 
     const counts = {};
     (data || []).forEach(v => {
       counts[v.vote_for] = (counts[v.vote_for] || 0) + 1;
@@ -660,7 +678,7 @@ async function getVoteCounts(dateFilter = null) {
     return {};
   }
 }
-
+ 
 async function getAllVotes(filters = {}) {
   try {
     let query = window.db.from('problem_votes').select('*').order('vote_date', { ascending: false });
@@ -668,11 +686,11 @@ async function getAllVotes(filters = {}) {
     if (filters.topic) query = query.eq('vote_for', filters.topic);
     const { data, error } = await query;
     if (error) throw error;
-
+ 
     const students = await adminGetAllStudents();
     const sm = {};
     students.forEach(s => { sm[s.id] = s; });
-
+ 
     return (data || []).map(v => {
       const s = sm[v.user_id];
       return {
@@ -686,20 +704,20 @@ async function getAllVotes(filters = {}) {
     return [];
   }
 }
-
+ 
 async function getVoteAnalytics() {
   try {
     const { data, error } = await window.db.from('problem_votes').select('vote_for, vote_date');
     if (error) throw error;
     const votes = data || [];
-
+ 
     const topicCounts = {};
     const dailyCounts = {};
     votes.forEach(v => {
       topicCounts[v.vote_for] = (topicCounts[v.vote_for] || 0) + 1;
       dailyCounts[v.vote_date] = (dailyCounts[v.vote_date] || 0) + 1;
     });
-
+ 
     const sorted = Object.entries(topicCounts).sort((a, b) => b[1] - a[1]);
     return {
       topicCounts,
@@ -714,7 +732,7 @@ async function getVoteAnalytics() {
     return { topicCounts: {}, dailyCounts: {}, totalVotes: 0, mostVoted: null, leastVoted: null, leaderboard: [] };
   }
 }
-
+ 
 async function getVoteNotifications() {
   try {
     const { data, error } = await window.db
@@ -729,7 +747,7 @@ async function getVoteNotifications() {
     return [];
   }
 }
-
+ 
 async function markVoteNotificationsRead() {
   try {
     const { error } = await window.db
@@ -743,9 +761,9 @@ async function markVoteNotificationsRead() {
     return false;
   }
 }
-
+ 
 // ─── ADMIN ──────────────────────────────────────────────────────────────────
-
+ 
 async function adminGetAllStudents() {
   try {
     const { data, error } = await window.db
@@ -759,7 +777,7 @@ async function adminGetAllStudents() {
     return [];
   }
 }
-
+ 
 async function adminUpdateXP(userId, newXP) {
   try {
     const rankTitle = getRankTitle(newXP);
@@ -774,7 +792,7 @@ async function adminUpdateXP(userId, newXP) {
     return { success: false, error: e.message };
   }
 }
-
+ 
 async function adminResetStreak(userId) {
   try {
     const { error } = await window.db
@@ -788,18 +806,30 @@ async function adminResetStreak(userId) {
     return { success: false, error: e.message };
   }
 }
-
+ 
 // ─── AUTH GUARDS ────────────────────────────────────────────────────────────
-
+ 
 async function requireAuth() {
-  const u = await getCurrentUser();
-  if (!u) {
+  try {
+    const { data: sessionData } = await window.db.auth.getSession();
+    if (sessionData?.session?.user) {
+      return sessionData.session.user;
+    }
+    const { data: userData } = await window.db.auth.getUser();
+    if (userData?.user) {
+      return userData.user;
+    }
+    window.location.href = 'login.html';
+    return null;
+  } catch (e) {
+    console.error('requireAuth:', e);
+    const { data: fallback } = await window.db.auth.getSession().catch(() => ({ data: null }));
+    if (fallback?.session?.user) return fallback.session.user;
     window.location.href = 'login.html';
     return null;
   }
-  return u;
 }
-
+ 
 function requireAdmin() {
   if (!sessionStorage.getItem('vidx_admin')) {
     window.location.href = 'login.html';
@@ -807,33 +837,34 @@ function requireAdmin() {
   }
   return true;
 }
-
+ 
 async function logout() {
   try {
     await window.db.auth.signOut();
     sessionStorage.removeItem('vidx_admin');
+    sessionStorage.removeItem('vidx_placement');
     window.location.href = 'login.html';
   } catch (e) {
     console.error('logout:', e);
     window.location.href = 'login.html';
   }
 }
-
+ 
 // ─── UTILITIES ──────────────────────────────────────────────────────────────
-
+ 
 function getGreeting() {
   const hour = new Date().getHours();
   if (hour < 12) return 'Good morning';
   if (hour < 17) return 'Good afternoon';
   return 'Good evening';
 }
-
+ 
 function getInitials(firstName, lastName) {
   const f = (firstName || '')[0] || '';
   const l = (lastName || '')[0] || '';
   return (f + l).toUpperCase() || '?';
 }
-
+ 
 function formatDate(dateStr) {
   if (!dateStr) return '';
   return new Date(dateStr).toLocaleDateString('en-IN', {
@@ -842,7 +873,7 @@ function formatDate(dateStr) {
     year: 'numeric'
   });
 }
-
+ 
 function getMidnightCountdown() {
   const now = new Date();
   const midnight = new Date(now);
@@ -851,11 +882,11 @@ function getMidnightCountdown() {
   const h = Math.floor(diff / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
   const s = Math.floor((diff % 60000) / 1000);
-  return { h, m, s, formatted: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` };
+  return { h, m, s, formatted: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '00')}:${String(s).padStart(2, '0')}` };
 }
-
+ 
 // ─── PROBLEM LIBRARY ────────────────────────────────────────────────────────
-
+ 
 async function getUserSolvedProblemIds(userId) {
   try {
     const { data } = await window.db
@@ -869,19 +900,19 @@ async function getUserSolvedProblemIds(userId) {
     return [];
   }
 }
-
+ 
 async function getProblemStats(problemId) {
   try {
     const { data: subs } = await window.db
       .from('submissions')
       .select('status, verdict')
       .eq('problem_id', problemId);
-
+ 
     const total = (subs || []).length;
     const accepted = (subs || []).filter(s =>
       s.status === 'correct' || s.verdict === 'Accepted'
     ).length;
-
+ 
     return {
       totalAttempts: total,
       totalAccepted: accepted,
@@ -891,7 +922,7 @@ async function getProblemStats(problemId) {
     return { totalAttempts: 0, totalAccepted: 0, successRate: 0 };
   }
 }
-
+ 
 async function getRelatedProblems(problem, limit = 4) {
   try {
     const all = await getAllProblems();
@@ -902,11 +933,11 @@ async function getRelatedProblems(problem, limit = 4) {
     return [];
   }
 }
-
+ 
 function filterProblems(problems, filters = {}) {
   let result = [...problems];
   const { search, difficulty, topic, company, status, solvedIds, bookmarkedIds, sort } = filters;
-
+ 
   if (search) {
     const q = search.toLowerCase();
     result = result.filter(p =>
@@ -932,7 +963,7 @@ function filterProblems(problems, filters = {}) {
   if (status === 'bookmarked' && bookmarkedIds) {
     result = result.filter(p => bookmarkedIds.includes(p.id));
   }
-
+ 
   if (sort === 'newest') {
     result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   } else if (sort === 'solved') {
@@ -943,15 +974,15 @@ function filterProblems(problems, filters = {}) {
     const order = { Beginner: 1, Intermediate: 2, Advanced: 3 };
     result.sort((a, b) => (order[a.difficulty] || 0) - (order[b.difficulty] || 0));
   }
-
+ 
   return result;
 }
-
+ 
 // ─── BOOKMARKS & LIKES ──────────────────────────────────────────────────────
-
+ 
 function _bookmarkKey(userId) { return `vidx_bookmarks_${userId}`; }
 function _likesKey(userId) { return `vidx_likes_${userId}`; }
-
+ 
 async function getBookmarkedProblems(userId) {
   try {
     const { data } = await window.db.from('problem_bookmarks').select('problem_id').eq('user_id', userId);
@@ -961,14 +992,14 @@ async function getBookmarkedProblems(userId) {
     return JSON.parse(localStorage.getItem(_bookmarkKey(userId)) || '[]');
   } catch (e) { return []; }
 }
-
+ 
 async function toggleBookmark(userId, problemId) {
   const local = JSON.parse(localStorage.getItem(_bookmarkKey(userId)) || '[]');
   const idx = local.indexOf(problemId);
   const isBookmarked = idx === -1;
   if (isBookmarked) local.push(problemId); else local.splice(idx, 1);
   localStorage.setItem(_bookmarkKey(userId), JSON.stringify(local));
-
+ 
   try {
     if (isBookmarked) {
       await window.db.from('problem_bookmarks').insert({ user_id: userId, problem_id: problemId });
@@ -976,23 +1007,23 @@ async function toggleBookmark(userId, problemId) {
       await window.db.from('problem_bookmarks').delete().eq('user_id', userId).eq('problem_id', problemId);
     }
   } catch (e) { /* localStorage is source of truth */ }
-
+ 
   return isBookmarked;
 }
-
+ 
 async function getLikedProblems(userId) {
   try {
     return JSON.parse(localStorage.getItem(_likesKey(userId)) || '[]');
   } catch (e) { return []; }
 }
-
+ 
 async function toggleLike(userId, problemId) {
   const local = JSON.parse(localStorage.getItem(_likesKey(userId)) || '[]');
   const idx = local.indexOf(problemId);
   const isLiked = idx === -1;
   if (isLiked) local.push(problemId); else local.splice(idx, 1);
   localStorage.setItem(_likesKey(userId), JSON.stringify(local));
-
+ 
   try {
     if (isLiked) {
       await window.db.from('problem_likes').insert({ user_id: userId, problem_id: problemId });
@@ -1000,61 +1031,50 @@ async function toggleLike(userId, problemId) {
       await window.db.from('problem_likes').delete().eq('user_id', userId).eq('problem_id', problemId);
     }
   } catch (e) { /* ok */ }
-
+ 
   return isLiked;
 }
-
-// ─── CODE EXECUTION (Judge0 CE — Piston public API is whitelist-only since Feb 2026) ─
-
+ 
+// ─── CODE EXECUTION ──────────────────────────────────────────────────────────
+// Primary: Judge0 CE (ce.judge0.com) — free tier, may rate limit
+// Fallback 1: Judge0 Extra CE (extra.judge0.com) — separate free instance
+// Fallback 2: Glot.io — open API, no auth needed
+// Note: Piston (emkc.org) is whitelist-only since Feb 2026 — removed
+ 
 const JUDGE0_URL = 'https://ce.judge0.com/submissions?base64_encoded=false&wait=true';
-const PISTON_URL = 'https://emkc.org/api/v2/piston/execute';
+const JUDGE0_EXTRA_URL = 'https://extra.judge0.com/submissions?base64_encoded=false&wait=true';
+const GLOT_URL = 'https://glot.io/api/run';
+ 
 const LANG_CONFIG = {
-  python: { language_id: 71, label: 'Python 3', piston: { language: 'python', version: '3.10.0', filename: 'main.py' } },
-  java: { language_id: 62, label: 'Java', piston: { language: 'java', version: '15.0.2', filename: 'Main.java' } },
-  cpp: { language_id: 54, label: 'C++', piston: { language: 'c++', version: '10.2.0', filename: 'main.cpp' } },
-  javascript: { language_id: 63, label: 'JavaScript', piston: { language: 'javascript', version: '18.15.0', filename: 'main.js' } }
+  python:     { language_id: 71,  label: 'Python 3',   glot: { language: 'python',     version: 'latest', filename: 'main.py'   } },
+  java:       { language_id: 62,  label: 'Java',        glot: { language: 'java',       version: 'latest', filename: 'Main.java' } },
+  cpp:        { language_id: 54,  label: 'C++',         glot: { language: 'cpp',        version: 'latest', filename: 'main.cpp'  } },
+  javascript: { language_id: 63,  label: 'JavaScript',  glot: { language: 'javascript', version: 'latest', filename: 'main.js'   } }
 };
-
-async function executeViaPiston(langKey, code, stdin) {
+ 
+// ── Glot.io fallback (no API key needed for basic use) ──────────────────────
+async function executeViaGlot(langKey, code, stdin) {
   const cfg = LANG_CONFIG[langKey];
-  if (!cfg?.piston) throw new Error('Unsupported language');
-  const res = await fetch(PISTON_URL, {
+  if (!cfg?.glot) throw new Error('Unsupported language for Glot');
+  const res = await fetch(`${GLOT_URL}/${cfg.glot.language}/${cfg.glot.version}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      language: cfg.piston.language,
-      version: cfg.piston.version,
-      files: [{ name: cfg.piston.filename, content: code }],
+      files: [{ name: cfg.glot.filename, content: code }],
       stdin: stdin || ''
     })
   });
+  if (!res.ok) throw new Error(`Glot HTTP ${res.status}`);
   const data = await res.json();
-  const run = data.run || {};
-  return {
-    stdout: run.stdout || '',
-    stderr: run.stderr || '',
-    code: run.code,
-    runtimeMs: 0,
-    memoryKb: 0
-  };
+  const stdout = data.run?.stdout || '';
+  const stderr = data.run?.stderr || data.run?.error || '';
+  return { stdout, stderr, code: stderr ? 1 : 0, runtimeMs: 0, memoryKb: 0 };
 }
-
-function normalizeOutput(s) {
-  return (s || '').trim().replace(/\r\n/g, '\n').replace(/\s+$/, '');
-}
-
-function formatExecutionOutput(result) {
-  const stdout = (result.stdout || '').replace(/\r\n/g, '\n').trimEnd();
-  const stderr = (result.stderr || '').replace(/\r\n/g, '\n').trimEnd();
-  if (stdout) return stdout;
-  if (stderr) return stderr;
-  return '(no output)';
-}
-
-async function executeCode(langKey, code, stdin = '', timeoutMs = 10000) {
+ 
+// ── Single Judge0 instance call ──────────────────────────────────────────────
+async function executeViaJudge0(url, langKey, code, stdin, timeoutMs) {
   const cfg = LANG_CONFIG[langKey];
   if (!cfg) throw new Error('Unsupported language');
-
   const cpuLimit = Math.max(2, Math.ceil(timeoutMs / 1000));
   const payload = {
     source_code: code,
@@ -1063,79 +1083,133 @@ async function executeCode(langKey, code, stdin = '', timeoutMs = 10000) {
     cpu_time_limit: cpuLimit,
     memory_limit: 128000
   };
-
-  console.log('[VidX Execute] request:', { lang: langKey, language_id: cfg.language_id, stdinLen: (stdin || '').length, cpuLimit });
-
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs + 5000);
-
   try {
-    const res = await fetch(JUDGE0_URL, {
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
       body: JSON.stringify(payload)
     });
     clearTimeout(timer);
-
     const raw = await res.text();
     let data;
-    try {
-      data = JSON.parse(raw);
-    } catch (parseErr) {
-      console.error('[VidX Execute] non-JSON response:', raw);
-      throw new Error('Execution service returned invalid response');
-    }
-
-    console.log('[VidX Execute] response:', data);
-
-    if (!res.ok) {
-      throw new Error(data.message || data.error || `Execution HTTP ${res.status}`);
-    }
-
+    try { data = JSON.parse(raw); } catch { throw new Error('Invalid response from execution service'); }
+    if (!res.ok) throw new Error(data.message || data.error || `HTTP ${res.status}`);
     const statusId = data.status?.id;
     const stdout = data.stdout ?? '';
     const stderr = data.stderr ?? data.compile_output ?? '';
     const runtimeMs = Math.round(parseFloat(data.time || 0) * 1000);
     const memoryKb = data.memory || 0;
-
-    if (statusId === 5) {
-      return { stdout, stderr, error: 'Time Limit Exceeded', tle: true, code: 1, runtimeMs, memoryKb };
-    }
-    if (statusId === 6) {
-      return { stdout, stderr: stderr || 'Compilation Error', code: 1, runtimeMs, memoryKb };
-    }
-    if (statusId === 11 || statusId === 12) {
-      return { stdout, stderr: stderr || data.status?.description || 'Runtime Error', code: 1, runtimeMs, memoryKb };
-    }
-
-    const exitCode = statusId === 3 || statusId === 4 ? 0 : (statusId > 3 ? 1 : 0);
-    return { stdout, stderr, code: exitCode, runtimeMs, memoryKb, status: data.status?.description };
+    if (statusId === 5) return { stdout, stderr, error: 'Time Limit Exceeded', tle: true, code: 1, runtimeMs, memoryKb };
+    if (statusId === 6) return { stdout, stderr: stderr || 'Compilation Error', code: 1, runtimeMs, memoryKb };
+    if (statusId === 11 || statusId === 12) return { stdout, stderr: stderr || 'Runtime Error', code: 1, runtimeMs, memoryKb };
+    const exitCode = (statusId === 3 || statusId === 4) ? 0 : (statusId > 3 ? 1 : 0);
+    return { stdout, stderr, code: exitCode, runtimeMs, memoryKb };
   } catch (e) {
     clearTimeout(timer);
-    console.warn('[VidX Execute] Judge0 failed, trying Piston fallback:', e);
     if (e.name === 'AbortError') return { error: 'Time Limit Exceeded', tle: true, stdout: '', stderr: '' };
-    try {
-      return await executeViaPiston(langKey, code, stdin);
-    } catch (pistonErr) {
-      console.error('[VidX Execute] Piston fallback failed:', pistonErr);
-      throw e;
-    }
+    throw e;
   }
 }
-
+ 
+// ── Main executeCode — tries Judge0 CE → Judge0 Extra → Glot ────────────────
+async function executeCode(langKey, code, stdin = '', timeoutMs = 10000) {
+  // Try primary Judge0
+  try {
+    const result = await executeViaJudge0(JUDGE0_URL, langKey, code, stdin, timeoutMs);
+    console.log('[VidX Execute] Judge0 CE success');
+    return result;
+  } catch (e) {
+    console.warn('[VidX Execute] Judge0 CE failed:', e.message);
+  }
+ 
+  // Try extra Judge0 instance
+  try {
+    const result = await executeViaJudge0(JUDGE0_EXTRA_URL, langKey, code, stdin, timeoutMs);
+    console.log('[VidX Execute] Judge0 Extra success');
+    return result;
+  } catch (e) {
+    console.warn('[VidX Execute] Judge0 Extra failed:', e.message);
+  }
+ 
+  // Try Glot.io
+  try {
+    const result = await executeViaGlot(langKey, code, stdin);
+    console.log('[VidX Execute] Glot fallback success');
+    return result;
+  } catch (e) {
+    console.warn('[VidX Execute] Glot failed:', e.message);
+  }
+ 
+  // All failed
+  throw new Error('All code execution services are currently unavailable. Please try again in a moment.');
+}
+ 
 /** @deprecated Use executeCode — kept for backward compatibility */
 async function executePistonCode(langKey, code, stdin = '', timeoutMs = 10000) {
   return executeCode(langKey, code, stdin, timeoutMs);
 }
+ 
+// ── Keep old name for backward compat ───────────────────────────────────────
+async function executeViaPiston(langKey, code, stdin) {
+  return executeViaGlot(langKey, code, stdin);
+}
+ 
+function normalizeOutput(s) {
+  return (s || '')
+    .trim()
+    .replace(/\r\n/g, '\n')
+    .replace(/\s+$/, '')
+    .replace(/[\[\]]/g, '')        // remove [ ]
+    .replace(/,\s*/g, ' ')         // replace commas with space
+    .replace(/\s+/g, ' ')          // normalize multiple spaces
+    .trim();
+}
+ 
+function formatExecutionOutput(result) {
+  const stdout = (result.stdout || '').replace(/\r\n/g, '\n').trimEnd();
+  const stderr = (result.stderr || '').replace(/\r\n/g, '\n').trimEnd();
+  if (stdout) return stdout;
+  if (stderr) return stderr;
+  return '(no output)';
+}
+
+/** Shared test-case parser — used by Daily Problems and Battles (same judging input). */
+function getProblemTestCases(problem) {
+  if (!problem) return [];
+  let visible = [];
+  let hidden = [];
+  try {
+    visible = typeof problem.test_cases === 'string'
+      ? JSON.parse(problem.test_cases)
+      : (problem.test_cases || []);
+    hidden = typeof problem.hidden_test_cases === 'string'
+      ? JSON.parse(problem.hidden_test_cases)
+      : (problem.hidden_test_cases || []);
+  } catch (e) {
+    console.warn('[VidX] test case parse error:', e);
+  }
+  const merged = [...(Array.isArray(visible) ? visible : []), ...(Array.isArray(hidden) ? hidden : [])];
+  if (!merged.length && problem.sample_input) {
+    return [{ input: problem.sample_input, expected: problem.sample_output }];
+  }
+  return merged;
+}
 
 async function judgeSubmission(langKey, code, testCases, timeoutMs = 8000, onProgress) {
-  const cases = Array.isArray(testCases) && testCases.length ? testCases : [];
-  const total = cases.length || 1;
-  console.log('[VidX Judge] cases:', cases.length, 'lang:', langKey);
+  let cases = Array.isArray(testCases) && testCases.length ? testCases : [];
 
   if (!cases.length) {
-    return { verdict: 'Wrong Answer', passed: 0, total: 0, failedCase: { error: 'No test cases configured for this problem.' }, runtimeMs: 0 };
+    console.warn('[VidX Judge] No test_cases found — cannot judge submission.');
+    return {
+      verdict: 'Wrong Answer',
+      passed: 0,
+      total: 0,
+      failedCase: { error: 'No test cases configured for this problem. Ask admin to add test cases.' },
+      runtimeMs: 0
+    };
   }
 
   let passed = 0;
@@ -1177,6 +1251,7 @@ async function judgeSubmission(langKey, code, testCases, timeoutMs = 8000, onPro
 
   return { verdict: 'Accepted', passed, total: cases.length, failedCase: null, runtimeMs: totalRuntime };
 }
+ 
 // ─── UPDATE USER PROFILE ────────────────────────────────────────────────────
  
 async function updateUserProfile(userId, updates) {
@@ -1191,4 +1266,393 @@ async function updateUserProfile(userId, updates) {
     console.error('updateUserProfile:', e);
     return { success: false, error: e.message };
   }
+}
+
+// ─── LEARNING LEVEL PROGRESSION ─────────────────────────────────────────────
+
+const LEARNING_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
+const LEVEL_RANK = { Beginner: 1, Intermediate: 2, Advanced: 3 };
+
+const LEVEL_PROMOTION = {
+  Beginner: { next: 'Intermediate', requiredSolves: 10, difficulty: ['Easy', 'Beginner'] },
+  Intermediate: { next: 'Advanced', requiredSolves: 15, difficulty: ['Medium', 'Intermediate'] }
+};
+
+function mapExperienceToLearningLevel(experience) {
+  const e = (experience || 'newbie').toLowerCase();
+  if (e === 'advanced' || e === 'expert') return 'Advanced';
+  if (e === 'intermediate' || e === 'some') return 'Intermediate';
+  return 'Beginner';
+}
+
+function getStudentLearningLevel(profile) {
+  return profile?.learning_level || mapExperienceToLearningLevel(profile?.experience_level);
+}
+
+function difficultyToLearningLevel(difficulty) {
+  const d = (difficulty || 'Easy').toLowerCase();
+  if (d === 'hard' || d === 'advanced') return 'Advanced';
+  if (d === 'medium' || d === 'intermediate') return 'Intermediate';
+  return 'Beginner';
+}
+
+function canStudentSubmitProblem(profile, problem) {
+  const studentLevel = getStudentLearningLevel(profile);
+  const problemLevel = difficultyToLearningLevel(problem?.difficulty);
+  return (LEVEL_RANK[studentLevel] || 1) >= (LEVEL_RANK[problemLevel] || 1);
+}
+
+function getLevelUnlockMessage(profile, problem) {
+  const studentLevel = getStudentLearningLevel(profile);
+  const problemLevel = difficultyToLearningLevel(problem?.difficulty);
+  const rule = LEVEL_PROMOTION[studentLevel];
+  const need = rule ? `${rule.requiredSolves} ${rule.difficulty.join('/')} problems solved` : 'Complete previous level';
+  return {
+    locked: !canStudentSubmitProblem(profile, problem),
+    studentLevel,
+    problemLevel,
+    message: `This is a ${problemLevel} problem. You are currently ${studentLevel}. Solve ${need} to unlock ${rule?.next || 'the next level'}.`
+  };
+}
+
+async function countLevelSolves(userId, difficulties) {
+  try {
+    const { data: subs } = await window.db
+      .from('submissions')
+      .select('problem_id')
+      .eq('user_id', userId)
+      .eq('status', 'correct');
+    const ids = [...new Set((subs || []).map(s => s.problem_id))];
+    if (!ids.length) return 0;
+    const { data: probs } = await window.db.from('problems').select('id, difficulty').in('id', ids);
+    const diffSet = difficulties.map(d => d.toLowerCase());
+    return (probs || []).filter(p => diffSet.includes((p.difficulty || 'Easy').toLowerCase())).length;
+  } catch (e) {
+    return 0;
+  }
+}
+
+async function checkAndPromoteLearningLevel(userId) {
+  try {
+    const profile = await getUserProfile(userId);
+    if (!profile) return null;
+    const current = getStudentLearningLevel(profile);
+    const rule = LEVEL_PROMOTION[current];
+    if (!rule) return { level: current, promoted: false };
+
+    const solves = await countLevelSolves(userId, rule.difficulty);
+    if (solves < rule.requiredSolves) {
+      return { level: current, promoted: false, progress: solves, required: rule.requiredSolves };
+    }
+
+    await window.db.from('users').update({ learning_level: rule.next }).eq('id', userId);
+    try {
+      await window.db.from('notifications').insert({
+        user_id: userId,
+        title: '🎓 Level Up!',
+        message: `Congratulations! You advanced to ${rule.next} level. New problems are now unlocked.`,
+        type: 'system',
+        is_read: false
+      });
+    } catch (e) { /* optional */ }
+
+    return { level: rule.next, promoted: true, from: current };
+  } catch (e) {
+    console.error('checkAndPromoteLearningLevel:', e);
+    return null;
+  }
+}
+
+async function getLeaderboardByLevel(level, limit = 5) {
+  const all = await getLeaderboard(200);
+  return all.filter(s => getStudentLearningLevel(s) === level).slice(0, limit);
+}
+
+async function getLevelProgress(userId) {
+  const profile = await getUserProfile(userId);
+  const level = getStudentLearningLevel(profile);
+  const rule = LEVEL_PROMOTION[level];
+  if (!rule) return { level, complete: true };
+  const solves = await countLevelSolves(userId, rule.difficulty);
+  return {
+    level,
+    next: rule.next,
+    solves,
+    required: rule.requiredSolves,
+    percent: Math.min(100, Math.round((solves / rule.requiredSolves) * 100))
+  };
+}
+
+// ─── PLACEMENT CELL ─────────────────────────────────────────────────────────
+
+function requirePlacementAdmin() {
+  if (sessionStorage.getItem('vidx_placement') || sessionStorage.getItem('vidx_admin')) return true;
+  window.location.href = 'login.html';
+  return false;
+}
+
+function isStudentEligibleForPlacement(profile, item) {
+  if (!profile || !item) return false;
+  const branches = item.eligible_branches || [];
+  const years = item.eligible_years || [];
+  const batches = item.eligible_batches || [];
+  const studentIds = item.eligible_student_ids || [];
+  if (studentIds.length && !studentIds.includes(profile.id)) return false;
+  if (branches.length && !branches.includes(profile.branch)) return false;
+  if (years.length && !years.includes(String(profile.year))) return false;
+  if (batches.length && !batches.includes(profile.college)) return false;
+  return true;
+}
+
+async function getPlacementCompanies() {
+  try {
+    const { data, error } = await window.db.from('placement_companies').select('*').order('name');
+    if (error) throw error;
+    return data || [];
+  } catch (e) { return []; }
+}
+
+async function savePlacementCompany(payload) {
+  try {
+    const { data, error } = await window.db.from('placement_companies').upsert(payload).select().single();
+    if (error) throw error;
+    return { success: true, data };
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+async function deletePlacementCompany(id) {
+  try {
+    const { error } = await window.db.from('placement_companies').delete().eq('id', id);
+    if (error) throw error;
+    return { success: true };
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+async function getPlacementDrives(filters = {}) {
+  try {
+    let q = window.db.from('placement_drives').select('*, placement_companies(name, logo_url, package_ctc)').order('drive_date', { ascending: false });
+    const { data, error } = await q;
+    if (error) throw error;
+    return (data || []).filter(d => {
+      if (filters.upcoming && new Date(d.registration_deadline || d.drive_date) < new Date()) return false;
+      return true;
+    });
+  } catch (e) { return []; }
+}
+
+async function savePlacementDrive(payload) {
+  try {
+    const { data, error } = await window.db.from('placement_drives').upsert(payload).select().single();
+    if (error) throw error;
+    return { success: true, data };
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+async function getPlacementTests() {
+  try {
+    const { data, error } = await window.db.from('placement_tests').select('*').order('start_time', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (e) { return []; }
+}
+
+async function getPlacementTestById(id) {
+  try {
+    const { data, error } = await window.db.from('placement_tests').select('*').eq('id', id).single();
+    if (error) throw error;
+    const { data: questions } = await window.db.from('placement_test_questions').select('*').eq('test_id', id).order('sort_order');
+    return { ...data, questions: questions || [] };
+  } catch (e) { return null; }
+}
+
+async function savePlacementTest(test, questions) {
+  try {
+    const { id, ...rest } = test;
+    let testId = id;
+    if (testId) {
+      const { error } = await window.db.from('placement_tests').update(rest).eq('id', testId);
+      if (error) throw error;
+      await window.db.from('placement_test_questions').delete().eq('test_id', testId);
+    } else {
+      const { data, error } = await window.db.from('placement_tests').insert(rest).select().single();
+      if (error) throw error;
+      testId = data.id;
+    }
+    if (questions?.length) {
+      const rows = questions.map((q, i) => ({ ...q, test_id: testId, sort_order: i }));
+      const { error: qErr } = await window.db.from('placement_test_questions').insert(rows);
+      if (qErr) throw qErr;
+    }
+    return { success: true, id: testId };
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+async function deletePlacementTest(id) {
+  try {
+    await window.db.from('placement_test_questions').delete().eq('test_id', id);
+    const { error } = await window.db.from('placement_tests').delete().eq('id', id);
+    if (error) throw error;
+    return { success: true };
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+async function registerForDrive(userId, driveId) {
+  try {
+    const { error } = await window.db.from('placement_registrations').upsert({
+      user_id: userId, drive_id: driveId, status: 'registered'
+    }, { onConflict: 'user_id,drive_id' });
+    if (error) throw error;
+    return { success: true };
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+async function getStudentPlacementDashboard(userId) {
+  try {
+    const profile = await getUserProfile(userId);
+    const [drives, tests, regs, attempts] = await Promise.all([
+      getPlacementDrives(),
+      getPlacementTests(),
+      window.db.from('placement_registrations').select('*').eq('user_id', userId).then(r => r.data || []),
+      window.db.from('placement_test_attempts').select('*').eq('user_id', userId).then(r => r.data || [])
+    ]);
+    const regDriveIds = new Set(regs.map(r => r.drive_id));
+    const eligibleDrives = drives.filter(d => isStudentEligibleForPlacement(profile, d));
+    const eligibleTests = tests.filter(t => t.is_published && isStudentEligibleForPlacement(profile, t));
+    return {
+      profile,
+      upcomingDrives: eligibleDrives.filter(d => new Date(d.drive_date) >= new Date()),
+      upcomingTests: eligibleTests.filter(t => new Date(t.end_time) >= new Date()),
+      appliedDrives: eligibleDrives.filter(d => regDriveIds.has(d.id)),
+      attempts,
+      placementScore: profile?.placement_score || 0,
+      placementReadiness: profile?.placement_readiness || 0,
+      status: profile?.placement_status || {}
+    };
+  } catch (e) {
+    console.error('getStudentPlacementDashboard:', e);
+    return null;
+  }
+}
+
+async function startPlacementAttempt(userId, testId) {
+  try {
+    const now = new Date().toISOString();
+    const { data, error } = await window.db.from('placement_test_attempts').insert({
+      user_id: userId,
+      test_id: testId,
+      started_at: now,
+      status: 'in_progress',
+      risk_score: 0,
+      violation_count: 0
+    }).select().single();
+    if (error) throw error;
+    return { success: true, attempt: data };
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+async function submitPlacementAttempt(attemptId, answers, proctorSummary) {
+  try {
+    const { data: attempt } = await window.db.from('placement_test_attempts').select('*').eq('id', attemptId).single();
+    if (!attempt) throw new Error('Attempt not found');
+    const test = await getPlacementTestById(attempt.test_id);
+    let score = 0;
+    let maxScore = 0;
+    (test.questions || []).forEach(q => {
+      maxScore += q.marks || 1;
+      const ans = answers[q.id];
+      if (q.question_type === 'mcq' && ans === q.correct_option) score += q.marks || 1;
+      else if (q.question_type === 'coding' && ans?.verdict === 'Accepted') score += q.marks || 1;
+    });
+    const risk = proctorSummary?.riskScore || attempt.risk_score || 0;
+    await window.db.from('placement_test_answers').insert(
+      Object.entries(answers).map(([questionId, answer]) => ({
+        attempt_id: attemptId,
+        question_id: questionId,
+        answer: typeof answer === 'object' ? answer : { value: answer }
+      }))
+    );
+    await window.db.from('placement_test_attempts').update({
+      status: 'completed',
+      submitted_at: new Date().toISOString(),
+      score,
+      max_score: maxScore,
+      risk_score: risk,
+      violation_count: proctorSummary?.violationCount || attempt.violation_count || 0
+    }).eq('id', attemptId);
+    await window.db.from('users').update({
+      placement_score: score,
+      placement_readiness: Math.min(100, Math.round((score / Math.max(maxScore, 1)) * 70 + (100 - risk) * 0.3))
+    }).eq('id', attempt.user_id);
+    return { success: true, score, maxScore, risk };
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+async function logProctorEvent(payload) {
+  try {
+    const { error } = await window.db.from('placement_proctor_events').insert(payload);
+    if (error) throw error;
+    return { success: true };
+  } catch (e) { return { success: false, error: e.message }; }
+}
+
+async function getPlacementAnalytics() {
+  try {
+    const [students, tests, attempts, regs, selected] = await Promise.all([
+      adminGetAllStudents(),
+      getPlacementTests(),
+      window.db.from('placement_test_attempts').select('*').then(r => r.data || []),
+      window.db.from('placement_registrations').select('*').then(r => r.data || []),
+      window.db.from('placement_student_status').select('*').eq('selection_status', 'selected').then(r => r.data || [])
+    ]);
+    const completed = attempts.filter(a => a.status === 'completed');
+    const avg = completed.length
+      ? Math.round(completed.reduce((s, a) => s + (a.score || 0), 0) / completed.length)
+      : 0;
+    const top = [...completed].sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 5);
+    return {
+      totalEligible: students.length,
+      totalRegistered: regs.length,
+      totalAppeared: completed.length,
+      totalSelected: selected.length,
+      averageScore: avg,
+      topPerformers: top,
+      tests
+    };
+  } catch (e) { return null; }
+}
+
+async function getPlacementLeaderboard(limit = 50) {
+  try {
+    const { data, error } = await window.db
+      .from('users')
+      .select('id, first_name, last_name, branch, year, placement_score, placement_readiness, learning_level')
+      .order('placement_score', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data || [];
+  } catch (e) { return []; }
+}
+
+function computeReadinessCategory(score) {
+  if (score >= 80) return 'Placement Ready';
+  if (score >= 60) return 'Advanced';
+  if (score >= 35) return 'Intermediate';
+  return 'Beginner';
+}
+
+async function computePlacementReadiness(userId) {
+  try {
+    const profile = await getUserProfile(userId);
+    const coding = Math.min(40, Math.round((profile?.problems_solved || 0) * 2));
+    const xpPart = Math.min(20, Math.round((profile?.xp || 0) / 250));
+    const streakPart = Math.min(10, (profile?.streak || 0));
+    const { data: attempts } = await window.db.from('placement_test_attempts').select('score, max_score').eq('user_id', userId).eq('status', 'completed');
+    const testPart = attempts?.length
+      ? Math.min(30, Math.round(attempts.reduce((s, a) => s + ((a.score || 0) / Math.max(a.max_score || 1, 1)) * 30, 0) / attempts.length))
+      : 0;
+    const score = Math.min(100, coding + xpPart + streakPart + testPart);
+    const category = computeReadinessCategory(score);
+    await window.db.from('users').update({ placement_readiness: score }).eq('id', userId);
+    return { score, category, breakdown: { coding, xpPart, streakPart, testPart } };
+  } catch (e) { return { score: 0, category: 'Beginner' }; }
 }
