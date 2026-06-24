@@ -143,7 +143,7 @@
       javascript:'const fs=require("fs");\nconst input=fs.readFileSync(0,"utf8").trim();\n'
     };
     let currentUser=null,problem=null,stats=null,related=[],bookmarked=false,liked=false,startTime=Date.now(),activeTab='problem',_submitStartTime=0,userProfile=null,submissionLocked=false;
-
+ 
     async function onDbReady(){
       currentUser=await requireAuth();if(!currentUser)return;
       userProfile=await getUserProfile(currentUser.id);
@@ -221,16 +221,15 @@
         banner.style.display='none';
       }
     }
-
+ 
     function allProblemsCache(){return _allCache;}
     function loadTemplate(){document.getElementById('codeEditor').value=TEMPLATES[document.getElementById('langSelect').value];}
  
     // ── EDITOR: paste disable + IDE indentation ───────────────────────────────
     document.addEventListener('DOMContentLoaded',function(){
       var editor=document.getElementById('codeEditor');
-      var INDENT='    '; // 4 spaces
+      var INDENT='    ';
  
-      // Block paste
       editor.addEventListener('paste',function(e){e.preventDefault();});
  
       editor.addEventListener('keydown',function(e){
@@ -238,7 +237,6 @@
         var start=this.selectionStart;
         var end=this.selectionEnd;
  
-        // TAB — insert 4 spaces
         if(e.key==='Tab'&&!e.shiftKey){
           e.preventDefault();
           if(start===end){
@@ -257,8 +255,6 @@
             this.selectionStart=start+4;
             this.selectionEnd=end+(4*(endLine-startLine+1));
           }
- 
-        // SHIFT+TAB — remove one indent level
         }else if(e.key==='Tab'&&e.shiftKey){
           e.preventDefault();
           var lines=val.split('\n');
@@ -276,8 +272,6 @@
           this.value=lines.join('\n');
           this.selectionStart=Math.max(0,start-4);
           this.selectionEnd=Math.max(0,end-removed);
- 
-        // ENTER — preserve indent + auto-indent after : or {
         }else if(e.key==='Enter'){
           e.preventDefault();
           var lineStart=val.lastIndexOf('\n',start-1)+1;
@@ -291,8 +285,6 @@
           }
           this.value=val.substring(0,start)+'\n'+indent+val.substring(end);
           this.selectionStart=this.selectionEnd=start+1+indent.length;
- 
-        // BACKSPACE — remove full indent block when cursor is after only spaces
         }else if(e.key==='Backspace'&&start===end){
           var lineStart=val.lastIndexOf('\n',start-1)+1;
           var beforeCursor=val.substring(lineStart,start);
@@ -307,16 +299,37 @@
     });
     // ─────────────────────────────────────────────────────────────────────────
  
-    function getTestCases(){
-      var visible=[],hidden=[];
-      try{
-        visible=typeof problem.test_cases==='string'?JSON.parse(problem.test_cases):(problem.test_cases||[]);
-        hidden=typeof problem.hidden_test_cases==='string'?JSON.parse(problem.hidden_test_cases):(problem.hidden_test_cases||[]);
-      }catch(e){console.warn('[VidX] test case parse error:',e);}
-      var tc=visible.concat(hidden);
-      if(!tc.length&&problem.sample_input)tc=[{input:problem.sample_input,expected:problem.sample_output}];
-      return tc;
-    }
+    // ── FIX: getTestCases — properly parse test_cases, fallback to sample ──
+  function getTestCases(){
+  var visible=[], hidden=[];
+  try{
+    visible = typeof problem.test_cases === 'string'
+      ? JSON.parse(problem.test_cases)
+      : (problem.test_cases || []);
+  } catch(e){ visible = []; }
+  try{
+    hidden = typeof problem.hidden_test_cases === 'string'
+      ? JSON.parse(problem.hidden_test_cases)
+      : (problem.hidden_test_cases || []);
+  } catch(e){ hidden = []; }
+
+  var tc = visible.concat(hidden);
+
+  // Fallback: agar koi bhi test case nahi toh sample use karo
+  if(!tc.length && problem.sample_input){
+    tc = [{input: problem.sample_input, expected: problem.sample_output}];
+  }
+
+  // Normalize keys — expected_output aur output ko expected mein convert karo
+  tc = tc.map(function(t){
+    return {
+      input: t.input || '',
+      expected: t.expected || t.expected_output || t.output || ''
+    };
+  });
+
+  return tc;
+}
  
     async function runCode(){
       var btn=document.getElementById('runBtn'),out=document.getElementById('output'),meta=document.getElementById('outputMeta');
@@ -343,6 +356,15 @@
         var lang=document.getElementById('langSelect').value;
         var pasteMode=document.getElementById('pasteMode').checked;
         var testCases=getTestCases();
+ 
+        // ── FIX: If no test cases at all, block submission with clear message ──
+        if(!testCases.length){
+          out.textContent='No test cases found for this problem. Please contact admin.';
+          out.className='output-text error';
+          btn.disabled=false;
+          return;
+        }
+ 
         var judge=await judgeSubmission(lang,code,testCases,8000,function(cur,total){out.textContent='Judging test case '+cur+' of '+total+'...';});
         var timeTaken=Math.max(1,Math.round((Date.now()-submitStartTime)/60000));
         var submissionMode=pasteMode?'paste':'code';

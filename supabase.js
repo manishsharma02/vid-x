@@ -264,22 +264,43 @@ function getRankTitle(xp) {
  
 async function giveXP(userId, amount) {
   try {
-    const profile = await getUserProfile(userId);
-    if (!profile) throw new Error('User not found');
- 
+    // Attempt 1: Normal flow
+    let profile = null;
+    try {
+      profile = await getUserProfile(userId);
+    } catch(e) {
+      console.warn('giveXP: getUserProfile failed:', e);
+    }
+
+    if (!profile) {
+      // Attempt 2: Direct select + update without getUserProfile
+      try {
+        const { data: cur } = await window.db
+          .from('users').select('xp').eq('id', userId).single();
+        if (cur) {
+          const newXP = (cur.xp || 0) + amount;
+          const rankTitle = getRankTitle(newXP);
+          await window.db.from('users')
+            .update({ xp: newXP, rank_title: rankTitle }).eq('id', userId);
+          return { newXP, rankTitle };
+        }
+      } catch(e2) {
+        console.warn('giveXP: direct update failed:', e2);
+      }
+      // Network issue — skip XP silently, submission still saves
+      console.error('giveXP: could not award XP — network issue, submission still saved');
+      return null;
+    }
+
     const newXP = (profile.xp || 0) + amount;
     const rankTitle = getRankTitle(newXP);
- 
     const { error } = await window.db
-      .from('users')
-      .update({ xp: newXP, rank_title: rankTitle })
-      .eq('id', userId);
- 
+      .from('users').update({ xp: newXP, rank_title: rankTitle }).eq('id', userId);
     if (error) throw error;
     return { newXP, rankTitle };
   } catch (e) {
     console.error('giveXP:', e);
-    return null;
+    return null; // Never throw — submission must not fail
   }
 }
  
@@ -1158,16 +1179,33 @@ async function executeViaPiston(langKey, code, stdin) {
 }
  
 function normalizeOutput(s) {
-  return (s || '')
-    .trim()
-    .replace(/\r\n/g, '\n')
-    .replace(/\s+$/, '')
-    .replace(/[\[\]]/g, '')        // remove [ ]
-    .replace(/,\s*/g, ' ')         // replace commas with space
-    .replace(/\s+/g, ' ')          // normalize multiple spaces
-    .trim();
+  if (!s) return '';
+
+  // Step 1: Normalize Windows line endings
+  let result = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  // Step 2: Trim each line individually (removes trailing spaces per line)
+  const lines = result.split('\n').map(line => line.trimEnd());
+
+  // Step 3: Remove trailing empty lines only
+  while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+    lines.pop();
+  }
+
+  // Step 4: Join lines back
+  result = lines.join('\n');
+
+  // Step 5: If single line — apply bracket/comma cleanup (for array outputs)
+  if (!result.includes('\n')) {
+    result = result
+      .replace(/^\[+/, '').replace(/\]+$/, '')   // remove [ ] wrappers
+      .replace(/,\s*/g, ' ')                      // commas → space
+      .replace(/\s+/g, ' ')                       // multiple spaces → one
+      .trim();
+  }
+
+  return result.trim();
 }
- 
 function formatExecutionOutput(result) {
   const stdout = (result.stdout || '').replace(/\r\n/g, '\n').trimEnd();
   const stderr = (result.stderr || '').replace(/\r\n/g, '\n').trimEnd();
@@ -1232,7 +1270,7 @@ async function judgeSubmission(langKey, code, testCases, timeoutMs = 8000, onPro
       }
       totalRuntime += result.runtimeMs || 0;
       const actual = normalizeOutput(result.stdout);
-      const expected = normalizeOutput(tc.expected || tc.output || '');
+      const expected = normalizeOutput(tc.expected || tc.expected_output || tc.output || '');
       if (actual !== expected) {
         return { verdict: 'Wrong Answer', passed, total: cases.length, failedCase: { index: i + 1, input: tc.input, expected, actual }, runtimeMs: totalRuntime };
       }

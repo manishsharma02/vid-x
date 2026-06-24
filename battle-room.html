@@ -580,6 +580,10 @@
       badge.textContent = 'ENDED'; badge.className = 'ended-badge';
       document.getElementById('battleTimer').textContent = 'Battle Ended';
       document.getElementById('resultsBattleName').textContent = battle?.title || '';
+      if (!battle) {
+  const { data: bData } = await window.db.from('battles').select('*').eq('id', battleId).single();
+  if (bData) { battle = bData; document.getElementById('resultsBattleName').textContent = bData.title || ''; }
+}
  
       try {
         // STEP 1: Load all participants
@@ -590,7 +594,12 @@
         }
  
         const baseXP = battle?.xp_reward || 200;
-        const totalProblems = battleProblems.length || 1;
+        if (!battle) {
+  const { data: bData } = await window.db.from('battles').select('*').eq('id', battleId).single();
+  battle = bData;
+}
+        const { data: bpCount } = await window.db.from('battle_problems').select('id').eq('battle_id', battleId);
+const totalProblems = (bpCount?.length) || battleProblems.length || 1;
  
         // Sort by problems solved desc, score desc, penalty asc, time asc
         const sorted = [...participants].sort((a, b) => {
@@ -607,6 +616,8 @@
         const existingMap = {};
         (existingResults || []).forEach(r => existingMap[r.user_id] = r);
         const alreadyPublished = (existingResults || []).length > 0;
+const xpAlreadyGiven = alreadyPublished; // XP sirf ek baar dega
+const forceRecalculate = !alreadyPublished;
  
         // STEP 3: Calculate XP and save results for each participant
         // FIX: Always upsert results so they show even if re-viewed
@@ -632,8 +643,7 @@
           else if (rank <= 10) badgeType = 'top10';
  
           try {
-            // Always upsert so results are always available when viewing
-            await window.db.from('battle_results').upsert({
+              await window.db.from('battle_results').upsert({
               battle_id: battleId,
               user_id: p.user_id,
               final_rank: rank,
@@ -644,10 +654,10 @@
             }, { onConflict: 'battle_id,user_id' });
  
             // FIX: Only give XP and send notification if not already published
-            if (!alreadyPublished) {
-              if (xp > 0) {
-                try { await giveXP(p.user_id, xp); } catch(e) { console.error('giveXP error:', e); }
-              }
+            if (forceRecalculate) {
+  if (xp > 0) {
+    try { await giveXP(p.user_id, xp); } catch(e) { console.error('giveXP error:', e); }
+  }
               if (badgeType) {
                 try { await window.db.from('battle_badges').insert({ user_id: p.user_id, battle_id: battleId, badge_type: badgeType }); } catch(e) {}
               }
@@ -665,9 +675,9 @@
         }
  
         // FIX: Mark battle completed and results published
-        if (!alreadyPublished) {
-          try {
-            await window.db.from('battles').update({
+        if (forceRecalculate) {
+        try {
+        await window.db.from('battles').update({
               results_published: true,
               winner_id: sorted[0]?.user_id || null,
               status: 'completed'
